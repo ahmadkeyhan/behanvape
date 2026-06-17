@@ -1,5 +1,4 @@
 import { getCategories } from "@/lib/public-data";
-import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CategoryCard } from "@/components/CategoryCard";
 
@@ -12,7 +11,6 @@ export default async function AllCategoriesPage() {
 
   return (
     <>
-      <SiteHeader />
       <main className="container py-8 sm:py-10">
         <h1 className="mb-6 text-2xl font-bold">دسته‌بندی محصولات</h1>
         {categories.length === 0 ? (

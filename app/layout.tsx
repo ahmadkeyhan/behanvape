@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { sans } from "@/lib/font";
 import { Providers } from "@/components/Providers";
+import { AppHeader } from "@/components/header/AppHeader";
 
 export const metadata: Metadata = {
   title: {
@@ -34,7 +35,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fa" dir="rtl" className={sans.variable} suppressHydrationWarning>
       <body className="min-h-dvh bg-background font-sans antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          <AppHeader />
+          {children}
+        </Providers>
       </body>
     </html>
   );

@@ -8,7 +8,6 @@ import {
   parseSort,
 } from "@/lib/public-data";
 import { toFaDigits } from "@/lib/format";
-import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ProductGrid } from "@/components/ProductGrid";
 import { FilterControls } from "@/components/catalog/FilterControls";
@@ -58,7 +57,6 @@ export default async function CategoryPage({
 
   return (
     <>
-      <SiteHeader />
       <main className="container py-6 sm:py-8">
         <nav className="mb-4 flex items-center gap-1 text-sm text-muted-foreground">
           <Link href="/" className="hover:text-foreground">

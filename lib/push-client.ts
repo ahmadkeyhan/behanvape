@@ -58,3 +58,32 @@ export async function subscribeToPush(): Promise<string> {
 
   return subscription.endpoint;
 }
+
+/** Whether this browser currently holds an active push subscription. */
+export async function isSubscribed(): Promise<boolean> {
+  if (!pushSupported()) return false;
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    return !!subscription;
+  } catch {
+    return false;
+  }
+}
+
+/** Removes the local push subscription and deletes it server-side. Safe to call when not subscribed. */
+export async function unsubscribeFromPush(): Promise<void> {
+  if (!pushSupported()) return;
+  const registration = await navigator.serviceWorker.ready;
+  const subscription = await registration.pushManager.getSubscription();
+  if (!subscription) return;
+
+  // Remove server-side first (so a failed unsubscribe() doesn't orphan the row), then locally.
+  await fetch("/api/push/unsubscribe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoint: subscription.endpoint }),
+  }).catch(() => undefined);
+
+  await subscription.unsubscribe().catch(() => undefined);
+}

@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
-import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminTabs } from "@/components/admin/AdminTabs";
 import { CashierBoard } from "@/components/admin/CashierBoard";
 
@@ -12,11 +11,8 @@ export default async function AdminPage() {
 
   const role = session.user.role;
   return (
-    <div className="min-h-dvh">
-      <AdminHeader username={session.user.username} role={role} />
-      <main className="container py-6">
-        {role === "admin" ? <AdminTabs /> : <CashierBoard />}
-      </main>
-    </div>
+    <main className="container py-6">
+      {role === "admin" ? <AdminTabs /> : <CashierBoard />}
+    </main>
   );
 }

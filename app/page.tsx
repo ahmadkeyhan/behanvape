@@ -1,5 +1,4 @@
 import { getCategories } from "@/lib/public-data";
-import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Hero } from "@/components/Hero";
 import { CategoryCard } from "@/components/CategoryCard";
@@ -12,7 +11,6 @@ export default async function HomePage() {
 
   return (
     <>
-      <SiteHeader />
       <Hero />
       <main className="container py-10 sm:py-12">
         <h2 className="mb-6 text-xl font-bold sm:text-2xl">دسته‌بندی‌ها</h2>
