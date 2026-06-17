@@ -1,5 +1,4 @@
 import { getCategories } from "@/lib/public-data";
-import { SiteFooter } from "@/components/SiteFooter";
 import { CategoryCard } from "@/components/CategoryCard";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +22,6 @@ export default async function AllCategoriesPage() {
           </div>
         )}
       </main>
-      <SiteFooter />
     </>
   );
 }

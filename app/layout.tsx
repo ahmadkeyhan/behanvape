@@ -3,6 +3,7 @@ import "./globals.css";
 import { sans } from "@/lib/font";
 import { Providers } from "@/components/Providers";
 import { AppHeader } from "@/components/header/AppHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: {
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <AppHeader />
           {children}
+          <SiteFooter />
         </Providers>
       </body>
     </html>

@@ -1,5 +1,4 @@
 import { getCategories } from "@/lib/public-data";
-import { SiteFooter } from "@/components/SiteFooter";
 import { Hero } from "@/components/Hero";
 import { CategoryCard } from "@/components/CategoryCard";
 
@@ -24,7 +23,6 @@ export default async function HomePage() {
           </div>
         )}
       </main>
-      <SiteFooter />
     </>
   );
 }
