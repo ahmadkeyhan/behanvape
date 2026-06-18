@@ -4,6 +4,7 @@ import { sans } from "@/lib/font";
 import { Providers } from "@/components/Providers";
 import { AppHeader } from "@/components/header/AppHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { AgeGate } from "@/components/AgeGate";
 
 export const metadata: Metadata = {
   title: {
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AppHeader />
           {children}
           <SiteFooter />
+          <AgeGate />
         </Providers>
       </body>
     </html>

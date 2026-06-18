@@ -117,7 +117,7 @@ docker run -p 3000:3000 --env-file .env behanvape
 
 ## 7. Notes & deviations from the original spec
 
-- **Age gate omitted** by request (the spec flagged it as optional).
+- **Age gate** — a one-time client-side 18+ confirmation modal (`components/AgeGate.tsx`) shows on first visit to the public catalogue and remembers the choice via a `localStorage` flag (`behanvape:age-verified`). It is skipped on `/admin*` routes. This is a lightweight UX gate, not a backend restriction.
 - **Product `slug` removed** — there are no per-product pages, so products are identified by `_id`.
 - `disposable.nicotineDensity` is kept as an optional field (spec ASSUMPTION).
 - A category's `productType` is **locked after creation** in the UI (server also blocks changing it once products exist), to avoid orphaning attribute data. A product's category can only be changed among categories of the same `productType`.
