@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatNumber } from "@/lib/format";
 import { PRODUCT_TYPE_FIELDS, type ProductType } from "@/lib/product-types";
 import type { Facets, ProductFilters } from "@/lib/public-data";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { RangeSlider } from "@/components/ui/range-slider";
 import { cn } from "@/lib/utils";
 
 function Chip({
@@ -30,6 +31,58 @@ function Chip({
     >
       {children}
     </button>
+  );
+}
+
+// Step that gives ~100 increments and handles decimal-valued fields (e.g. resistance).
+function rangeStep(min: number, max: number): number {
+  const span = max - min;
+  const decimal = !Number.isInteger(min) || !Number.isInteger(max);
+  if (decimal) return span >= 5 ? 0.1 : 0.01;
+  if (span <= 200) return 1;
+  return Math.max(1, Math.round(span / 100));
+}
+
+function RangeFilterField({
+  label,
+  unit,
+  min,
+  max,
+  valueMin,
+  valueMax,
+  onCommit,
+}: {
+  label: string;
+  unit?: string;
+  min: number;
+  max: number;
+  valueMin?: number;
+  valueMax?: number;
+  onCommit: (values: [number, number]) => void;
+}) {
+  const step = rangeStep(min, max);
+  const [vals, setVals] = useState<[number, number]>([valueMin ?? min, valueMax ?? max]);
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold">
+          {label}
+          {unit ? ` (${unit})` : ""}
+        </h3>
+        <span dir="ltr" className="text-xs text-muted-foreground">
+          {formatNumber(vals[0])} – {formatNumber(vals[1])}
+        </span>
+      </div>
+      <RangeSlider
+        min={min}
+        max={max}
+        step={step}
+        value={vals}
+        onValueChange={setVals}
+        onValueCommit={onCommit}
+      />
+    </section>
   );
 }
 
@@ -64,11 +117,20 @@ export function FilterControls({
     commit(next);
   }
 
-  function setRange(key: string, which: "min" | "max", value: string) {
+  // Writes both bounds; a bound equal to the facet edge is omitted (= "no limit") to keep URLs clean.
+  function commitRange(
+    minKey: string,
+    maxKey: string,
+    values: [number, number],
+    boundMin: number,
+    boundMax: number,
+  ) {
     const next = new URLSearchParams(sp.toString());
-    const pk = `f_${key}_${which}`;
-    if (value) next.set(pk, value);
-    else next.delete(pk);
+    const [vMin, vMax] = values;
+    if (vMin > boundMin) next.set(minKey, String(vMin));
+    else next.delete(minKey);
+    if (vMax < boundMax) next.set(maxKey, String(vMax));
+    else next.delete(maxKey);
     commit(next);
   }
 
@@ -79,12 +141,15 @@ export function FilterControls({
     commit(next);
   }
 
+  const hasPriceFacet = facets.price.max > facets.price.min;
+
   const hasAnyFacet =
+    hasPriceFacet ||
     facets.brands.length > 0 ||
     fields.some((f) => {
       const ff = facets.fields[f.key];
       if (!ff) return false;
-      if (ff.kind === "range") return ff.max > 0;
+      if (ff.kind === "range") return ff.max > ff.min;
       return ff.values.length > 0;
     });
 
@@ -94,6 +159,21 @@ export function FilterControls({
 
   return (
     <div className="space-y-6">
+      {hasPriceFacet && (
+        <RangeFilterField
+          key={`price-${filters.price.min ?? ""}-${filters.price.max ?? ""}`}
+          label="قیمت"
+          unit="تومان"
+          min={facets.price.min}
+          max={facets.price.max}
+          valueMin={filters.price.min}
+          valueMax={filters.price.max}
+          onCommit={(v) =>
+            commitRange("price_min", "price_max", v, facets.price.min, facets.price.max)
+          }
+        />
+      )}
+
       {facets.brands.length > 0 && (
         <section className="space-y-2">
           <h3 className="text-sm font-semibold">برند</h3>
@@ -112,36 +192,21 @@ export function FilterControls({
         if (!facet) return null;
 
         if (facet.kind === "range") {
-          if (facet.max <= 0) return null;
+          if (facet.max <= facet.min) return null;
           const r = filters.range[f.key] || {};
           return (
-            <section key={f.key} className="space-y-2">
-              <h3 className="text-sm font-semibold">
-                {f.label}
-                {f.unit ? ` (${f.unit})` : ""}
-              </h3>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  dir="ltr"
-                  placeholder={`از ${facet.min}`}
-                  defaultValue={r.min ?? ""}
-                  onBlur={(e) => setRange(f.key, "min", e.target.value)}
-                  className="h-9"
-                />
-                <span className="text-muted-foreground">تا</span>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  dir="ltr"
-                  placeholder={`تا ${facet.max}`}
-                  defaultValue={r.max ?? ""}
-                  onBlur={(e) => setRange(f.key, "max", e.target.value)}
-                  className="h-9"
-                />
-              </div>
-            </section>
+            <RangeFilterField
+              key={`${f.key}-${r.min ?? ""}-${r.max ?? ""}`}
+              label={f.label}
+              unit={f.unit}
+              min={facet.min}
+              max={facet.max}
+              valueMin={r.min}
+              valueMax={r.max}
+              onCommit={(v) =>
+                commitRange(`f_${f.key}_min`, `f_${f.key}_max`, v, facet.min, facet.max)
+              }
+            />
           );
         }
 

@@ -53,6 +53,7 @@ export async function getCategoryBySlug(slug: string): Promise<PublicCategory | 
 
 export interface ProductFilters {
   brands: string[];
+  price: { min?: number; max?: number }; // base-field price range (Toman), applies to every productType
   multi: Record<string, number[]>; // numeric multi-select fields
   notes: Record<string, string[]>; // notes multi-select fields
   range: Record<string, { min?: number; max?: number }>;
@@ -65,6 +66,7 @@ export type FieldFacet =
 
 export interface Facets {
   brands: string[];
+  price: { min: number; max: number };
   fields: Record<string, FieldFacet>;
 }
 
@@ -85,8 +87,20 @@ function toArray(v: string | string[] | undefined): string[] {
   return parts.map((s) => s.trim()).filter(Boolean);
 }
 
+function numParam(v: string | string[] | undefined): number | undefined {
+  if (!v) return undefined;
+  const n = Number(Array.isArray(v) ? v[0] : v);
+  return Number.isNaN(n) ? undefined : n;
+}
+
 export function parseFilters(productType: ProductType, sp: SP): ProductFilters {
-  const filters: ProductFilters = { brands: toArray(sp.brand), multi: {}, notes: {}, range: {} };
+  const filters: ProductFilters = {
+    brands: toArray(sp.brand),
+    price: { min: numParam(sp.price_min), max: numParam(sp.price_max) },
+    multi: {},
+    notes: {},
+    range: {},
+  };
   for (const f of PRODUCT_TYPE_FIELDS[productType]) {
     if (f.filter === "multi" && f.kind === "number") {
       filters.multi[f.key] = toArray(sp[`f_${f.key}`])
@@ -125,6 +139,14 @@ function computeFacets(productType: ProductType, products: PublicProduct[]): Fac
     new Set(products.map((p) => p.brand).filter((b): b is string => !!b)),
   ).sort((a, b) => a.localeCompare(b, "fa"));
 
+  const prices = products
+    .map((p) => p.price)
+    .filter((v): v is number => typeof v === "number" && !Number.isNaN(v));
+  const price = {
+    min: prices.length ? Math.min(...prices) : 0,
+    max: prices.length ? Math.max(...prices) : 0,
+  };
+
   const fields: Record<string, FieldFacet> = {};
   for (const f of PRODUCT_TYPE_FIELDS[productType]) {
     if (f.filter === "multi" && f.kind === "number") {
@@ -152,7 +174,7 @@ function computeFacets(productType: ProductType, products: PublicProduct[]): Fac
       };
     }
   }
-  return { brands, fields };
+  return { brands, price, fields };
 }
 
 function matchFilters(
@@ -161,6 +183,9 @@ function matchFilters(
   filters: ProductFilters,
 ): boolean {
   if (filters.brands.length && !filters.brands.includes(p.brand)) return false;
+
+  if (filters.price.min != null && p.price < filters.price.min) return false;
+  if (filters.price.max != null && p.price > filters.price.max) return false;
 
   for (const f of PRODUCT_TYPE_FIELDS[productType]) {
     if (f.filter === "multi" && f.kind === "number") {

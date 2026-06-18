@@ -50,6 +50,7 @@ export default async function CategoryPage({
 
   const activeCount =
     filters.brands.length +
+    (filters.price.min != null || filters.price.max != null ? 1 : 0) +
     Object.values(filters.multi).reduce((a, v) => a + v.length, 0) +
     Object.values(filters.notes).reduce((a, v) => a + v.length, 0) +
     Object.values(filters.range).filter((r) => r.min != null || r.max != null).length;
