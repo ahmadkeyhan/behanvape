@@ -14,6 +14,8 @@ import { MobileFilters } from "@/components/catalog/MobileFilters";
 import { SortControl } from "@/components/catalog/SortControl";
 import { Pagination } from "@/components/catalog/Pagination";
 
+// Rendered on-demand (never statically generated, no generateStaticParams), so
+// categories created after the build resolve immediately without a rebuild/redeploy.
 export const dynamic = "force-dynamic";
 
 type SP = Record<string, string | string[] | undefined>;

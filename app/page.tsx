@@ -1,9 +1,11 @@
 import { getCategories } from "@/lib/public-data";
 import { Hero } from "@/components/Hero";
 import { FeaturedCategoryCard } from "@/components/FeaturedCategoryCard";
+import { InstallCtaCard } from "@/components/home/InstallCtaCard";
+import { NotificationCtaCard } from "@/components/home/NotificationCtaCard";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 
 // Catalogue reflects the live DB on each request.
 export const dynamic = "force-dynamic";
@@ -52,10 +54,15 @@ export default async function HomePage() {
           <Button asChild size="lg" className="sm:col-span-2">
             <Link href="/products">
               مشاهده‌ی تمام محصولات
-              <ArrowLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4" />
             </Link>
           </Button>
         </div>
+
+        <section className="mt-10 grid gap-4 sm:grid-cols-2 sm:gap-6">
+          <InstallCtaCard />
+          <NotificationCtaCard />
+        </section>
       </main>
     </>
   );

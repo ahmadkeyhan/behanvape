@@ -70,6 +70,9 @@ const iqosSchema = new Schema({
   chargingTime: { type: Number }, // minutes
 });
 
+// "other": no extra fields — base schema only (title/description/brand/price/images/available).
+const otherSchema = new Schema({});
+
 const discriminatorSchemas: Record<string, Schema> = {
   juice: juiceSchema,
   vape: vapeSchema,
@@ -77,6 +80,7 @@ const discriminatorSchemas: Record<string, Schema> = {
   tobacco: tobaccoSchema,
   cartridge: cartridgeSchema,
   iqos: iqosSchema,
+  other: otherSchema,
 };
 
 for (const [name, schema] of Object.entries(discriminatorSchemas)) {

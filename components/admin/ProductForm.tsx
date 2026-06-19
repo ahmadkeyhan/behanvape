@@ -48,7 +48,8 @@ export function ProductForm({
   const defaultValues: ProductFormValues = {
     title: initial?.title ?? "",
     brand: initial?.brand ?? "",
-    price: initial?.price ?? 0,
+    // Empty (not 0) so the field shows a placeholder; zod coerces "" -> 0 on submit.
+    price: initial?.price ?? "",
     description: initial?.description ?? "",
     category: initial?.category?._id ?? initial?.category ?? defaultCategoryId,
   };
@@ -111,7 +112,14 @@ export function ProductForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="p-price">قیمت (تومان)</Label>
-          <Input id="p-price" type="number" inputMode="numeric" dir="ltr" {...register("price")} />
+          <Input
+            id="p-price"
+            type="number"
+            inputMode="numeric"
+            dir="ltr"
+            placeholder="0"
+            {...register("price")}
+          />
           {errors.price && (
             <p className="text-xs text-destructive">{String(errors.price.message)}</p>
           )}

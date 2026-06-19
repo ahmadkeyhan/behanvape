@@ -16,6 +16,7 @@ export const PRODUCT_TYPES = [
   "tobacco",
   "cartridge",
   "iqos",
+  "other",
 ] as const;
 export type ProductType = (typeof PRODUCT_TYPES)[number];
 
@@ -26,6 +27,7 @@ export const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
   tobacco: "توتون",
   cartridge: "کارتریج",
   iqos: "آیکاس",
+  other: "سایر",
 };
 
 export type AttrKind = "number" | "notes" | "boolean";
@@ -103,6 +105,8 @@ export const PRODUCT_TYPE_FIELDS: Record<ProductType, AttrField[]> = {
       optional: true,
     },
   ],
+  // "other" uses only the base product fields (title/description/brand/price/images/available).
+  other: [],
 };
 
 export function isProductType(value: unknown): value is ProductType {

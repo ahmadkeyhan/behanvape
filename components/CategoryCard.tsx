@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import type { PublicCategory } from "@/lib/public-data";
 
 export function CategoryCard({ category }: { category: PublicCategory }) {
@@ -42,7 +42,7 @@ export function CategoryCard({ category }: { category: PublicCategory }) {
               </p>
             )}
           </div>
-          <ArrowLeft className="h-4 w-4 shrink-0 text-primary transition-transform group-hover:-translate-x-1" />
+          <ChevronLeft className="h-4 w-4 shrink-0 text-primary transition-transform group-hover:-translate-x-1" />
         </div>
       </Link>
     </motion.div>

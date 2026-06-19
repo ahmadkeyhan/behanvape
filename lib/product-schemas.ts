@@ -48,6 +48,7 @@ export const typeFieldSchemas: Record<ProductType, z.ZodTypeAny> = {
     usesPerCharge: optionalNumber,
     chargingTime: optionalNumber,
   }),
+  other: z.object({}),
 };
 
 /** Validates a product payload for a given type, returning base + type-specific fields merged. */
