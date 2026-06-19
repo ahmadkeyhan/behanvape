@@ -22,7 +22,7 @@ export function FeaturedCategoryCard({
     <motion.div
       whileHover={{ y: -4 }}
       transition={{ type: "spring", stiffness: 300, damping: 22 }}
-      className=" overflow-hidden rounded-3xl"
+      className=" overflow-hidden rounded-3xl border border-border"
     >
       <Link
         href={href}
