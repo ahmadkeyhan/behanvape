@@ -53,7 +53,8 @@ export default async function CategoryPage({
     (filters.price.min != null || filters.price.max != null ? 1 : 0) +
     Object.values(filters.multi).reduce((a, v) => a + v.length, 0) +
     Object.values(filters.notes).reduce((a, v) => a + v.length, 0) +
-    Object.values(filters.range).filter((r) => r.min != null || r.max != null).length;
+    Object.values(filters.range).filter((r) => r.min != null || r.max != null).length +
+    Object.values(filters.bool).filter(Boolean).length;
 
   return (
     <>

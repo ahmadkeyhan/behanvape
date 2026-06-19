@@ -134,6 +134,13 @@ export function FilterControls({
     commit(next);
   }
 
+  function setBool(key: string, on: boolean) {
+    const next = new URLSearchParams(sp.toString());
+    if (on) next.set(`f_${key}`, "1");
+    else next.delete(`f_${key}`);
+    commit(next);
+  }
+
   function clearAll() {
     const next = new URLSearchParams();
     const sort = sp.get("sort");
@@ -150,6 +157,7 @@ export function FilterControls({
       const ff = facets.fields[f.key];
       if (!ff) return false;
       if (ff.kind === "range") return ff.max > ff.min;
+      if (ff.kind === "boolean") return ff.trueCount > 0 && ff.falseCount > 0;
       return ff.values.length > 0;
     });
 
@@ -190,6 +198,19 @@ export function FilterControls({
       {fields.map((f) => {
         const facet = facets.fields[f.key];
         if (!facet) return null;
+
+        if (facet.kind === "boolean") {
+          // only useful when the category has a mix of with/without
+          if (facet.trueCount === 0 || facet.falseCount === 0) return null;
+          return (
+            <section key={f.key} className="space-y-2">
+              <h3 className="text-sm font-semibold">{f.label}</h3>
+              <Chip active={!!filters.bool[f.key]} onClick={() => setBool(f.key, !filters.bool[f.key])}>
+                دارد
+              </Chip>
+            </section>
+          );
+        }
 
         if (facet.kind === "range") {
           if (facet.max <= facet.min) return null;

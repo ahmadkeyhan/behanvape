@@ -57,12 +57,14 @@ export interface ProductFilters {
   multi: Record<string, number[]>; // numeric multi-select fields
   notes: Record<string, string[]>; // notes multi-select fields
   range: Record<string, { min?: number; max?: number }>;
+  bool: Record<string, boolean>; // boolean toggle filters; true => require the attribute to be true
 }
 
 export type FieldFacet =
   | { kind: "multi"; values: number[] }
   | { kind: "notes"; values: string[] }
-  | { kind: "range"; min: number; max: number };
+  | { kind: "range"; min: number; max: number }
+  | { kind: "boolean"; trueCount: number; falseCount: number };
 
 export interface Facets {
   brands: string[];
@@ -100,6 +102,7 @@ export function parseFilters(productType: ProductType, sp: SP): ProductFilters {
     multi: {},
     notes: {},
     range: {},
+    bool: {},
   };
   for (const f of PRODUCT_TYPE_FIELDS[productType]) {
     if (f.filter === "multi" && f.kind === "number") {
@@ -115,6 +118,10 @@ export function parseFilters(productType: ProductType, sp: SP): ProductFilters {
         min: min ? Number(min) : undefined,
         max: max ? Number(max) : undefined,
       };
+    } else if (f.filter === "boolean") {
+      const raw = sp[`f_${f.key}`];
+      const val = Array.isArray(raw) ? raw[0] : raw;
+      if (val === "1" || val === "true") filters.bool[f.key] = true;
     }
   }
   return filters;
@@ -172,6 +179,9 @@ function computeFacets(productType: ProductType, products: PublicProduct[]): Fac
         min: nums.length ? Math.min(...nums) : 0,
         max: nums.length ? Math.max(...nums) : 0,
       };
+    } else if (f.filter === "boolean") {
+      const trueCount = products.filter((p) => p[f.key] === true).length;
+      fields[f.key] = { kind: "boolean", trueCount, falseCount: products.length - trueCount };
     }
   }
   return { brands, price, fields };
@@ -202,6 +212,8 @@ function matchFilters(
       const val = p[f.key];
       if (r?.min != null && (typeof val !== "number" || val < r.min)) return false;
       if (r?.max != null && (typeof val !== "number" || val > r.max)) return false;
+    } else if (f.filter === "boolean") {
+      if (filters.bool[f.key] && p[f.key] !== true) return false;
     }
   }
   return true;

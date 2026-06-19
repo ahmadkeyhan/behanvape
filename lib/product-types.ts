@@ -9,19 +9,27 @@
  * categories may share one productType (e.g. Juice/Salt/Cigarette all use "juice").
  */
 
-export const PRODUCT_TYPES = ["juice", "vape", "disposable", "tobacco", "cartridge"] as const;
+export const PRODUCT_TYPES = [
+  "juice",
+  "vape",
+  "disposable",
+  "tobacco",
+  "cartridge",
+  "iqos",
+] as const;
 export type ProductType = (typeof PRODUCT_TYPES)[number];
 
 export const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
   juice: "جویس / سالت / سیگار",
   vape: "ویپ و پاد",
-  disposable: "ویپ یکبارمصرف",
+  disposable: "یکبارمصرف",
   tobacco: "توتون",
   cartridge: "کارتریج",
+  iqos: "آیکاس",
 };
 
-export type AttrKind = "number" | "notes";
-export type FilterKind = "range" | "multi" | "none";
+export type AttrKind = "number" | "notes" | "boolean";
+export type FilterKind = "range" | "multi" | "none" | "boolean";
 
 export interface AttrField {
   /** document field name on the discriminator */
@@ -46,6 +54,7 @@ export const PRODUCT_TYPE_FIELDS: Record<ProductType, AttrField[]> = {
   vape: [
     { key: "wattage", label: "توان", unit: "وات", kind: "number", filter: "range" },
     { key: "capacity", label: "ظرفیت", unit: "میلی‌لیتر", kind: "number", filter: "range" },
+    { key: "screen", label: "نمایشگر", kind: "boolean", filter: "boolean" },
   ],
   disposable: [
     { key: "puffs", label: "تعداد پاف", unit: "پاف", kind: "number", filter: "range" },
@@ -58,6 +67,7 @@ export const PRODUCT_TYPE_FIELDS: Record<ProductType, AttrField[]> = {
       optional: true,
     },
     { key: "notes", label: "نت‌های طعمی", kind: "notes", filter: "multi" },
+    { key: "screen", label: "نمایشگر", kind: "boolean", filter: "boolean" },
   ],
   tobacco: [
     { key: "weight", label: "وزن", unit: "گرم", kind: "number", filter: "range" },
@@ -66,6 +76,32 @@ export const PRODUCT_TYPE_FIELDS: Record<ProductType, AttrField[]> = {
   cartridge: [
     { key: "resistance", label: "مقاومت", unit: "اهم", kind: "number", filter: "range" },
     { key: "capacity", label: "ظرفیت", unit: "میلی‌لیتر", kind: "number", filter: "range" },
+  ],
+  // IQOS / heated-tobacco (heat-not-burn) devices: meaningful catalogue specs are
+  // battery capacity, sessions per charge, charge time, plus a free-form feature list.
+  iqos: [
+    {
+      key: "batteryCapacity",
+      label: "ظرفیت باتری",
+      unit: "میلی‌آمپر",
+      kind: "number",
+      filter: "range",
+    },
+    {
+      key: "usesPerCharge",
+      label: "دفعات مصرف با هر شارژ",
+      unit: "بار",
+      kind: "number",
+      filter: "range",
+    },
+    {
+      key: "chargingTime",
+      label: "زمان شارژ",
+      unit: "دقیقه",
+      kind: "number",
+      filter: "range",
+      optional: true,
+    },
   ],
 };
 

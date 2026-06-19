@@ -43,6 +43,7 @@ const juiceSchema = new Schema({
 const vapeSchema = new Schema({
   wattage: { type: Number },
   capacity: { type: Number }, // ml
+  screen: { type: Boolean, default: false }, // has a built-in display
 });
 
 const disposableSchema = new Schema({
@@ -50,6 +51,7 @@ const disposableSchema = new Schema({
   // ASSUMPTION: nicotineDensity kept (common on disposables); optional.
   nicotineDensity: { type: Number },
   notes: { type: [String], default: [] },
+  screen: { type: Boolean, default: false }, // has a built-in display
 });
 
 const tobaccoSchema = new Schema({
@@ -62,12 +64,19 @@ const cartridgeSchema = new Schema({
   capacity: { type: Number }, // ml
 });
 
+const iqosSchema = new Schema({
+  batteryCapacity: { type: Number }, // mAh
+  usesPerCharge: { type: Number }, // sessions per full charge
+  chargingTime: { type: Number }, // minutes
+});
+
 const discriminatorSchemas: Record<string, Schema> = {
   juice: juiceSchema,
   vape: vapeSchema,
   disposable: disposableSchema,
   tobacco: tobaccoSchema,
   cartridge: cartridgeSchema,
+  iqos: iqosSchema,
 };
 
 for (const [name, schema] of Object.entries(discriminatorSchemas)) {

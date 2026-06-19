@@ -13,6 +13,11 @@ const notesArray = z.preprocess(
   z.array(z.string()).optional().default([]),
 );
 
+const optionalBoolean = z.preprocess(
+  (v) => (v === undefined || v === null || v === "" ? false : v),
+  z.boolean(),
+);
+
 export const baseProductSchema = z.object({
   title: z.string().trim().min(1, "نام محصول الزامی است."),
   description: z.string().trim().optional().default(""),
@@ -29,14 +34,20 @@ export const baseProductSchema = z.object({
 // Type-specific field schemas, derived from the central PRODUCT_TYPE_FIELDS config.
 export const typeFieldSchemas: Record<ProductType, z.ZodTypeAny> = {
   juice: z.object({ volume: optionalNumber, nicotineDensity: optionalNumber, notes: notesArray }),
-  vape: z.object({ wattage: optionalNumber, capacity: optionalNumber }),
+  vape: z.object({ wattage: optionalNumber, capacity: optionalNumber, screen: optionalBoolean }),
   disposable: z.object({
     puffs: optionalNumber,
     nicotineDensity: optionalNumber,
     notes: notesArray,
+    screen: optionalBoolean,
   }),
   tobacco: z.object({ weight: optionalNumber, notes: notesArray }),
   cartridge: z.object({ resistance: optionalNumber, capacity: optionalNumber }),
+  iqos: z.object({
+    batteryCapacity: optionalNumber,
+    usesPerCharge: optionalNumber,
+    chargingTime: optionalNumber,
+  }),
 };
 
 /** Validates a product payload for a given type, returning base + type-specific fields merged. */
@@ -66,7 +77,9 @@ export function getProductFormSchema(productType: ProductType) {
     category: z.string().min(1, "دسته الزامی است."),
   };
   for (const f of PRODUCT_TYPE_FIELDS[productType]) {
-    shape[f.key] = f.kind === "number" ? optionalFormNumber : z.string().optional();
+    if (f.kind === "number") shape[f.key] = optionalFormNumber;
+    else if (f.kind === "boolean") shape[f.key] = z.boolean().optional().default(false);
+    else shape[f.key] = z.string().optional();
   }
   return z.object(shape);
 }
@@ -96,6 +109,8 @@ export function formToPayload(
         .split(/[,\n،]/)
         .map((s) => s.trim())
         .filter(Boolean);
+    } else if (f.kind === "boolean") {
+      payload[f.key] = Boolean(values[f.key]);
     } else {
       payload[f.key] = values[f.key];
     }

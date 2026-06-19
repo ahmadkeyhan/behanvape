@@ -53,10 +53,13 @@ export function ProductForm({
     category: initial?.category?._id ?? initial?.category ?? defaultCategoryId,
   };
   for (const f of fields) {
-    defaultValues[f.key] =
-      f.kind === "notes"
-        ? (Array.isArray(initial?.[f.key]) ? initial[f.key].join("، ") : "")
-        : (initial?.[f.key] ?? "");
+    if (f.kind === "notes") {
+      defaultValues[f.key] = Array.isArray(initial?.[f.key]) ? initial[f.key].join("، ") : "";
+    } else if (f.kind === "boolean") {
+      defaultValues[f.key] = initial?.[f.key] ?? false;
+    } else {
+      defaultValues[f.key] = initial?.[f.key] ?? "";
+    }
   }
 
   const {
@@ -136,29 +139,47 @@ export function ProductForm({
 
       {/* Type-specific fields, rendered from the central config */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {fields.map((f) =>
-          f.kind === "number" ? (
-            <div key={f.key} className="space-y-2">
-              <Label htmlFor={`p-${f.key}`}>
-                {f.label}
-                {f.unit ? ` (${f.unit})` : ""}
-              </Label>
-              <Input
-                id={`p-${f.key}`}
-                type="number"
-                inputMode="numeric"
-                dir="ltr"
-                step="any"
-                {...register(f.key)}
-              />
-            </div>
-          ) : (
+        {fields.map((f) => {
+          if (f.kind === "number") {
+            return (
+              <div key={f.key} className="space-y-2">
+                <Label htmlFor={`p-${f.key}`}>
+                  {f.label}
+                  {f.unit ? ` (${f.unit})` : ""}
+                </Label>
+                <Input
+                  id={`p-${f.key}`}
+                  type="number"
+                  inputMode="numeric"
+                  dir="ltr"
+                  step="any"
+                  {...register(f.key)}
+                />
+              </div>
+            );
+          }
+          if (f.kind === "boolean") {
+            return (
+              <div
+                key={f.key}
+                className="flex items-center justify-between rounded-lg border border-border p-3 sm:col-span-2"
+              >
+                <Label htmlFor={`p-${f.key}`}>{f.label}</Label>
+                <Switch
+                  id={`p-${f.key}`}
+                  checked={!!watch(f.key)}
+                  onCheckedChange={(v) => setValue(f.key, v)}
+                />
+              </div>
+            );
+          }
+          return (
             <div key={f.key} className="space-y-2 sm:col-span-2">
               <Label htmlFor={`p-${f.key}`}>{f.label} (با ویرگول جدا کنید)</Label>
               <Textarea id={`p-${f.key}`} {...register(f.key)} placeholder="آلبالو، نعناع، یخ" />
             </div>
-          ),
-        )}
+          );
+        })}
       </div>
 
       <div className="space-y-2">

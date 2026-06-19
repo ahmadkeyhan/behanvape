@@ -146,6 +146,14 @@ export function ProductDetailModal({
                     </div>
                   );
                 }
+                if (f.kind === "boolean") {
+                  return (
+                    <div key={f.key} className="rounded-lg bg-muted/50 p-3">
+                      <dt className="text-xs text-muted-foreground">{f.label}</dt>
+                      <dd className="mt-0.5 font-medium">{value ? "دارد" : "ندارد"}</dd>
+                    </div>
+                  );
+                }
                 if (value == null || value === "") return null;
                 return (
                   <div key={f.key} className="rounded-lg bg-muted/50 p-3">
