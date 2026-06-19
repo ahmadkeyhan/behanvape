@@ -179,12 +179,12 @@ export function ProductDetailModal({
                 {notifyState === "done" ? (
                   <>
                     <Check className="h-4 w-4" />
-                    به محض موجود شدن به شما اطلاع می‌دهیم
+                    به محض موجود شدن اطلاع می‌دهیم
                   </>
                 ) : (
                   <>
                     <BellRing className="h-4 w-4" />
-                    اطلاع بده موجود شد
+                    موجود شد خبرم کن!
                   </>
                 )}
               </Button>
