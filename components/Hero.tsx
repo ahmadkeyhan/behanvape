@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 const container = {
   hidden: {},
@@ -17,8 +18,11 @@ const item = {
 export function Hero() {
   return (
     <section className="relative overflow-hidden border-b border-border/60">
+      <div className="absolute w-full h-full">
+        <Image src="/hero.jpg" fill alt="hero image" className=" object-cover opacity-40" />
+      </div>
       {/* Signature moment: soft violet vapor blobs drifting behind the wordmark */}
-      <div aria-hidden className="pointer-events-none absolute inset-0">
+      <div aria-hidden className="pointer-events-none absolute inset-0 opacity-30">
         <div className="vapor-blob -top-24 start-[-4rem] h-80 w-80 bg-primary/25 animate-vapor-drift" />
         <div
           className="vapor-blob top-10 end-[-3rem] h-72 w-72 bg-fuchsia-600/20 animate-vapor-drift"
@@ -34,7 +38,7 @@ export function Hero() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="container relative flex flex-col items-center gap-6 py-20 text-center sm:py-28"
+        className="container relative flex flex-col items-center gap-6 py-16 px-8 text-center"
       >
         <motion.span
           variants={item}
@@ -50,10 +54,9 @@ export function Hero() {
         </motion.h1>
         <motion.p
           variants={item}
-          className="max-w-xl text-base leading-8 text-muted-foreground sm:text-lg"
+          className="max-w-xl text-base leading-8 text-foreground sm:text-lg"
         >
-          جدیدترین جویس‌ها، ویپ‌ها، پادها و لوازم جانبی — با کیفیت و اصالت تضمین‌شده، در یک کاتالوگ
-          همیشه به‌روز.
+          جدیدترین جویس‌ها، ویپ‌ها، پادها و لوازم جانبی با کیفیت و اصالت تضمین‌شده
         </motion.p>
         <motion.div variants={item}>
           <Button asChild size="lg">
