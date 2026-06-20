@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     default: "BehanVape | بهان‌ویپ",
     template: "%s | BehanVape",
   },
-  description: "کاتالوگ دیجیتال بهان‌ویپ — جویس، ویپ، پاد، سیگار الکترونیکی و لوازم جانبی",
+  description: "بهان‌ویپ — جویس، ویپ، پاد،کویل و کارتریج، آیکاس و لوازم جانبی",
   applicationName: "BehanVape",
   manifest: "/manifest.json",
   appleWebApp: {

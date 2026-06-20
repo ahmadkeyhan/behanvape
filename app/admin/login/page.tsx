@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
 
 export default function AdminLoginPage() {
   return (
@@ -50,13 +51,12 @@ function LoginForm() {
       <div className="vapor-blob bottom-0 end-1/4 h-64 w-64 bg-fuchsia-500/20 animate-vapor-drift" />
       <Card className="relative z-10 w-full max-w-sm border-border/60 bg-card/80 backdrop-blur">
         <CardHeader className="items-center text-center">
-          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
-            <Lock className="h-6 w-6" />
+          <div className="mb-2 flex h-20 w-20 items-center relative justify-center rounded-3xl bg-primary/15 text-primary">
+            <Image src="/violetLogo.png" alt="behan vape logo" fill />
           </div>
-          <CardTitle className="text-2xl">
-            ورود به پنل <span className="font-bold tracking-tight">BehanVape</span>
+          <CardTitle className="text-xl">
+            ورود به پنل <span className="text-primary font-extrabold">بهان ویپ</span>
           </CardTitle>
-          <CardDescription>برای مدیریت کاتالوگ وارد شوید</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
