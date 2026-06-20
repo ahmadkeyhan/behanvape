@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PRODUCT_TYPE_FIELDS, type ProductType } from "@/lib/product-types";
+import { PRODUCT_TYPE_FIELDS, getVariantField, type ProductType } from "@/lib/product-types";
 
 /* Per-productType zod schemas — the single source shared by the product API and the admin form. */
 
@@ -18,6 +18,29 @@ const optionalBoolean = z.preprocess(
   z.boolean(),
 );
 
+/** Array of {<valueKey>:number, available:boolean} variants; drops rows with a blank/non-numeric value. */
+function variantArray(valueKey: string) {
+  const option = z.object({
+    [valueKey]: z.coerce.number(),
+    available: z.preprocess((v) => (v === undefined || v === null ? true : v), z.boolean()),
+  });
+  return z.preprocess(
+    (v) =>
+      Array.isArray(v)
+        ? v.filter(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (o: any) =>
+              o != null &&
+              o[valueKey] !== "" &&
+              o[valueKey] !== null &&
+              o[valueKey] !== undefined &&
+              !Number.isNaN(Number(o[valueKey])),
+          )
+        : [],
+    z.array(option).optional().default([]),
+  );
+}
+
 export const baseProductSchema = z.object({
   title: z.string().trim().min(1, "نام محصول الزامی است."),
   description: z.string().trim().optional().default(""),
@@ -33,7 +56,11 @@ export const baseProductSchema = z.object({
 
 // Type-specific field schemas, derived from the central PRODUCT_TYPE_FIELDS config.
 export const typeFieldSchemas: Record<ProductType, z.ZodTypeAny> = {
-  juice: z.object({ volume: optionalNumber, nicotineDensity: optionalNumber, notes: notesArray }),
+  juice: z.object({
+    volume: optionalNumber,
+    nicotineOptions: variantArray("density"),
+    notes: notesArray,
+  }),
   vape: z.object({
     wattage: optionalNumber,
     capacity: optionalNumber,
@@ -47,7 +74,7 @@ export const typeFieldSchemas: Record<ProductType, z.ZodTypeAny> = {
     screen: optionalBoolean,
   }),
   tobacco: z.object({ weight: optionalNumber, notes: notesArray }),
-  cartridge: z.object({ resistance: optionalNumber, capacity: optionalNumber }),
+  cartridge: z.object({ resistanceOptions: variantArray("resistance"), capacity: optionalNumber }),
   iqos: z.object({
     batteryCapacity: optionalNumber,
     usesPerCharge: optionalNumber,
@@ -83,11 +110,23 @@ export function getProductFormSchema(productType: ProductType) {
     category: z.string().min(1, "دسته الزامی است."),
   };
   for (const f of PRODUCT_TYPE_FIELDS[productType]) {
+    if (f.kind === "variants") continue; // managed outside RHF (separate state)
     if (f.kind === "number") shape[f.key] = optionalFormNumber;
     else if (f.kind === "boolean") shape[f.key] = z.boolean().optional().default(false);
     else shape[f.key] = z.string().optional();
   }
   return z.object(shape);
+}
+
+/** Derived availability: for variant types it's "any option available"; otherwise the base flag. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function deriveAvailable(productType: ProductType, data: Record<string, any>): boolean {
+  const vf = getVariantField(productType);
+  if (vf) {
+    const opts = data[vf.key];
+    return Array.isArray(opts) && opts.some((o) => o?.available);
+  }
+  return data.available ?? true;
 }
 
 export type ProductFormValues = Record<string, unknown>;
@@ -110,6 +149,7 @@ export function formToPayload(
     available,
   };
   for (const f of PRODUCT_TYPE_FIELDS[productType]) {
+    if (f.kind === "variants") continue; // injected separately by the form (variants editor)
     if (f.kind === "notes") {
       payload[f.key] = String(values[f.key] ?? "")
         .split(/[,\n،]/)

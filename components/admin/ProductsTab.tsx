@@ -25,8 +25,6 @@ import { apiFetch } from "@/lib/api-client";
 import { formatPrice } from "@/lib/format";
 import { PRODUCT_TYPE_LABELS, type ProductType } from "@/lib/product-types";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -37,6 +35,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { AvailabilityToggles } from "@/components/admin/AvailabilityToggles";
 
 interface CategoryItem {
   _id: string;
@@ -103,19 +102,6 @@ export function ProductsTab() {
     if (selectedCat) loadProducts(selectedCat);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCat]);
-
-  async function toggleAvailability(p: ProductItem, value: boolean) {
-    setProducts((prev) => prev.map((x) => (x._id === p._id ? { ...x, available: value } : x)));
-    try {
-      await apiFetch(`/api/products/${p._id}/availability`, {
-        method: "PATCH",
-        body: JSON.stringify({ available: value }),
-      });
-    } catch (err) {
-      setProducts((prev) => prev.map((x) => (x._id === p._id ? { ...x, available: !value } : x)));
-      toast.error(err instanceof Error ? err.message : "خطا در تغییر وضعیت");
-    }
-  }
 
   async function onDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -200,7 +186,6 @@ export function ProductsTab() {
                 <SortableProductRow
                   key={p._id}
                   product={p}
-                  onToggle={(v) => toggleAvailability(p, v)}
                   onEdit={() => {
                     setEditing(p);
                     setDialogOpen(true);
@@ -247,12 +232,10 @@ export function ProductsTab() {
 
 function SortableProductRow({
   product,
-  onToggle,
   onEdit,
   onDelete,
 }: {
   product: ProductItem;
-  onToggle: (v: boolean) => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -297,10 +280,7 @@ function SortableProductRow({
         <p className="text-xs text-muted-foreground">{formatPrice(product.price)}</p>
       </div>
       <div className="flex items-center gap-2">
-        <Badge variant={product.available ? "success" : "secondary"} className="hidden sm:inline-flex">
-          {product.available ? "موجود" : "ناموجود"}
-        </Badge>
-        <Switch checked={product.available} onCheckedChange={onToggle} aria-label="وضعیت موجودی" />
+        <AvailabilityToggles product={product} />
         <Button variant="ghost" size="icon" onClick={onEdit} aria-label="ویرایش">
           <Pencil className="h-4 w-4" />
         </Button>

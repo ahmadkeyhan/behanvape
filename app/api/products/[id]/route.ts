@@ -7,7 +7,7 @@ import { NotifyRequest } from "@/models/NotifyRequest";
 import { requireRole, apiError } from "@/lib/api-auth";
 import { serialize } from "@/lib/serialize";
 import { toProductView } from "@/lib/product-view";
-import { parseProductPayload } from "@/lib/product-schemas";
+import { parseProductPayload, deriveAvailable } from "@/lib/product-schemas";
 import type { ProductType } from "@/lib/product-types";
 
 export const runtime = "nodejs";
@@ -61,6 +61,8 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       ...raw,
       category: raw?.category ?? String(product.category),
     });
+    // For variant types (juice/cartridge) availability is derived from the options.
+    data.available = deriveAvailable(productType, data);
 
     Object.assign(product, data);
     await product.save();

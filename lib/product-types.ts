@@ -30,7 +30,7 @@ export const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
   other: "سایر",
 };
 
-export type AttrKind = "number" | "notes" | "boolean";
+export type AttrKind = "number" | "notes" | "boolean" | "variants";
 export type FilterKind = "range" | "multi" | "none" | "boolean";
 
 export interface AttrField {
@@ -40,17 +40,27 @@ export interface AttrField {
   label: string;
   /** Persian unit suffix, if any */
   unit?: string;
-  /** scalar number vs. a list of string notes */
+  /** scalar number, list of string notes, boolean, or an array of {value, available} variants */
   kind: AttrKind;
   /** how this field appears in the public filter UI */
   filter: FilterKind;
   optional?: boolean;
+  /** for kind "variants": the numeric subfield name on each option (e.g. "density"). Each option also has a boolean `available`. */
+  variantKey?: string;
 }
 
 export const PRODUCT_TYPE_FIELDS: Record<ProductType, AttrField[]> = {
   juice: [
     { key: "volume", label: "حجم", unit: "میلی‌لیتر", kind: "number", filter: "multi" },
-    { key: "nicotineDensity", label: "نیکوتین", unit: "میلی‌گرم", kind: "number", filter: "multi" },
+    // nicotine strengths as variants — each strength has its own availability
+    {
+      key: "nicotineOptions",
+      label: "نیکوتین",
+      unit: "میلی‌گرم",
+      kind: "variants",
+      filter: "multi",
+      variantKey: "density",
+    },
     { key: "notes", label: "نت‌های طعمی", kind: "notes", filter: "multi" },
   ],
   vape: [
@@ -83,7 +93,15 @@ export const PRODUCT_TYPE_FIELDS: Record<ProductType, AttrField[]> = {
     { key: "notes", label: "نت‌های طعمی", kind: "notes", filter: "multi" },
   ],
   cartridge: [
-    { key: "resistance", label: "مقاومت", unit: "اهم", kind: "number", filter: "range" },
+    // resistances as variants — each resistance has its own availability
+    {
+      key: "resistanceOptions",
+      label: "مقاومت",
+      unit: "اهم",
+      kind: "variants",
+      filter: "multi",
+      variantKey: "resistance",
+    },
     { key: "capacity", label: "ظرفیت", unit: "میلی‌لیتر", kind: "number", filter: "range" },
   ],
   // IQOS / heated-tobacco (heat-not-burn) devices: meaningful catalogue specs are
@@ -118,4 +136,9 @@ export const PRODUCT_TYPE_FIELDS: Record<ProductType, AttrField[]> = {
 
 export function isProductType(value: unknown): value is ProductType {
   return typeof value === "string" && (PRODUCT_TYPES as readonly string[]).includes(value);
+}
+
+/** The single variants field for a product type, if it has one (juice→nicotineOptions, cartridge→resistanceOptions). */
+export function getVariantField(productType: ProductType): AttrField | undefined {
+  return PRODUCT_TYPE_FIELDS[productType]?.find((f) => f.kind === "variants");
 }

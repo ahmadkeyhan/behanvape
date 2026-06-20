@@ -4,6 +4,8 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { formatPrice } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { getVariantField } from "@/lib/product-types";
 import type { PublicProduct } from "@/lib/public-data";
 
 export function ProductCard({
@@ -13,6 +15,12 @@ export function ProductCard({
   product: PublicProduct;
   onClick: () => void;
 }) {
+  const variantField = getVariantField(product.productType);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const variants = (variantField ? product[variantField.key] : undefined) as
+    | { available: boolean; [k: string]: unknown }[]
+    | undefined;
+
   return (
     <motion.button
       type="button"
@@ -45,6 +53,23 @@ export function ProductCard({
       <div className="flex flex-1 flex-col gap-1 p-3">
         {product.brand && <span className="text-xs text-muted-foreground">{product.brand}</span>}
         <h3 className="line-clamp-2 text-sm font-medium leading-6">{product.title}</h3>
+        {variantField && variants && variants.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-0.5">
+            {variants.map((o, i) => (
+              <Badge
+                key={i}
+                variant="outline"
+                className={cn(
+                  "px-1.5 py-0 text-[10px] font-normal",
+                  !o.available && "opacity-40 line-through",
+                )}
+              >
+                {String(o[variantField.variantKey as string])}
+                {variantField.unit ? ` ${variantField.unit}` : ""}
+              </Badge>
+            ))}
+          </div>
+        )}
         {product.notes && product.notes.length > 0 && (
           <div className="flex flex-wrap gap-1 pt-0.5">
             {product.notes.slice(0, 3).map((n) => (

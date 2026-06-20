@@ -6,8 +6,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
 import { formatPrice } from "@/lib/format";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import { AvailabilityToggles } from "@/components/admin/AvailabilityToggles";
 import {
   Select,
   SelectContent,
@@ -59,20 +58,6 @@ export function CashierBoard() {
     });
   }, [products, filter]);
 
-  async function toggle(p: ProductItem, value: boolean) {
-    setProducts((prev) => prev.map((x) => (x._id === p._id ? { ...x, available: value } : x)));
-    try {
-      await apiFetch(`/api/products/${p._id}/availability`, {
-        method: "PATCH",
-        body: JSON.stringify({ available: value }),
-      });
-      toast.success(value ? "موجود شد" : "ناموجود شد");
-    } catch (err) {
-      setProducts((prev) => prev.map((x) => (x._id === p._id ? { ...x, available: !value } : x)));
-      toast.error(err instanceof Error ? err.message : "خطا در تغییر وضعیت");
-    }
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -121,14 +106,7 @@ export function CashierBoard() {
                 <p className="truncate font-medium">{p.title}</p>
                 <p className="text-xs text-muted-foreground">{formatPrice(p.price)}</p>
               </div>
-              <Badge variant={p.available ? "success" : "secondary"}>
-                {p.available ? "موجود" : "ناموجود"}
-              </Badge>
-              <Switch
-                checked={p.available}
-                onCheckedChange={(v) => toggle(p, v)}
-                aria-label="وضعیت موجودی"
-              />
+              <AvailabilityToggles product={p} />
             </li>
           ))}
         </ul>

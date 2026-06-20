@@ -30,6 +30,9 @@ export type PublicProduct = Record<string, any> & {
   imageUrls: string[];
   productType: ProductType;
   notes?: string[];
+  // variant arrays (juice / cartridge); each option carries its own availability
+  nicotineOptions?: { density: number; available: boolean }[];
+  resistanceOptions?: { resistance: number; available: boolean }[];
   createdAt: string;
 };
 
@@ -111,6 +114,10 @@ export function parseFilters(productType: ProductType, sp: SP): ProductFilters {
         .filter((n) => !Number.isNaN(n));
     } else if (f.filter === "multi" && f.kind === "notes") {
       filters.notes[f.key] = toArray(sp[`f_${f.key}`]);
+    } else if (f.kind === "variants") {
+      filters.multi[f.key] = toArray(sp[`f_${f.key}`])
+        .map(Number)
+        .filter((n) => !Number.isNaN(n));
     } else if (f.filter === "range") {
       const min = sp[`f_${f.key}_min`];
       const max = sp[`f_${f.key}_max`];
@@ -170,6 +177,18 @@ function computeFacets(productType: ProductType, products: PublicProduct[]): Fac
         new Set(products.flatMap((p) => (Array.isArray(p[f.key]) ? p[f.key] : []))),
       ).sort((a: string, b: string) => a.localeCompare(b, "fa"));
       fields[f.key] = { kind: "notes", values };
+    } else if (f.kind === "variants") {
+      const vk = f.variantKey as string;
+      const values = Array.from(
+        new Set(
+          products
+            .flatMap((p) => (Array.isArray(p[f.key]) ? p[f.key] : []))
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .map((o: any) => o?.[vk])
+            .filter((v: unknown): v is number => typeof v === "number" && !Number.isNaN(v)),
+        ),
+      ).sort((a, b) => a - b);
+      fields[f.key] = { kind: "multi", values };
     } else if (f.filter === "range") {
       const nums = products
         .map((p) => p[f.key])
@@ -205,6 +224,14 @@ function matchFilters(
       const sel = filters.notes[f.key];
       if (sel?.length) {
         const have: string[] = Array.isArray(p[f.key]) ? p[f.key] : [];
+        if (!sel.some((s) => have.includes(s))) return false;
+      }
+    } else if (f.kind === "variants") {
+      const sel = filters.multi[f.key];
+      if (sel?.length) {
+        const vk = f.variantKey as string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const have: number[] = Array.isArray(p[f.key]) ? p[f.key].map((o: any) => o?.[vk]) : [];
         if (!sel.some((s) => have.includes(s))) return false;
       }
     } else if (f.filter === "range") {

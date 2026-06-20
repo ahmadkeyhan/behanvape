@@ -11,12 +11,14 @@ export const runtime = "nodejs";
 const schema = z.object({
   productId: z.string().min(1),
   subscriptionEndpoint: z.string().url(),
+  // specific variant value (juice strength / cartridge resistance), if this is a variant product
+  variant: z.number().optional(),
 });
 
 export async function POST(req: NextRequest) {
   try {
     await dbConnect();
-    const { productId, subscriptionEndpoint } = schema.parse(await req.json());
+    const { productId, subscriptionEndpoint, variant } = schema.parse(await req.json());
 
     const product = await Product.findById(productId).select("_id available").lean();
     if (!product) {
@@ -33,7 +35,11 @@ export async function POST(req: NextRequest) {
 
     // Compound unique index makes this idempotent; ignore duplicate-key errors.
     try {
-      await NotifyRequest.create({ product: productId, subscription: subscription._id });
+      await NotifyRequest.create({
+        product: productId,
+        subscription: subscription._id,
+        variant: variant ?? null,
+      });
     } catch (e) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((e as any)?.code !== 11000) throw e;

@@ -34,9 +34,14 @@ export const Product: Model<any> =
   (mongoose.models.Product as Model<any>) || mongoose.model("Product", ProductSchema);
 
 // --- Discriminator sub-schemas (extra fields per productType) ---
+// nicotine strengths as variants, each with its own availability
+const nicotineOptionSchema = new Schema(
+  { density: { type: Number }, available: { type: Boolean, default: true } },
+  { _id: false },
+);
 const juiceSchema = new Schema({
   volume: { type: Number }, // ml
-  nicotineDensity: { type: Number }, // mg
+  nicotineOptions: { type: [nicotineOptionSchema], default: [] },
   notes: { type: [String], default: [] },
 });
 
@@ -60,8 +65,13 @@ const tobaccoSchema = new Schema({
   notes: { type: [String], default: [] },
 });
 
+// resistances as variants, each with its own availability
+const resistanceOptionSchema = new Schema(
+  { resistance: { type: Number }, available: { type: Boolean, default: true } },
+  { _id: false },
+);
 const cartridgeSchema = new Schema({
-  resistance: { type: Number }, // Ohm
+  resistanceOptions: { type: [resistanceOptionSchema], default: [] },
   capacity: { type: Number }, // ml
 });
 

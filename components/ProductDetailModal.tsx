@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatPrice, formatNumber } from "@/lib/format";
-import { PRODUCT_TYPE_FIELDS } from "@/lib/product-types";
+import { PRODUCT_TYPE_FIELDS, getVariantField } from "@/lib/product-types";
 import { subscribeToPush } from "@/lib/push-client";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
@@ -31,16 +31,21 @@ export function ProductDetailModal({
 }) {
   const [activeImg, setActiveImg] = useState(0);
   const [notifyState, setNotifyState] = useState<"idle" | "loading" | "done">("idle");
+  const [notifyingVariant, setNotifyingVariant] = useState<number | null>(null);
+  const [notifiedVariants, setNotifiedVariants] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     setActiveImg(0);
     setNotifyState("idle");
+    setNotifyingVariant(null);
+    setNotifiedVariants(new Set());
   }, [product?._id]);
 
   if (!product) return null;
 
   const fields = PRODUCT_TYPE_FIELDS[product.productType] ?? [];
   const images = product.imageUrls?.length ? product.imageUrls : [];
+  const variantField = getVariantField(product.productType);
 
   async function handleNotify() {
     if (!product) return;
@@ -56,6 +61,28 @@ export function ProductDetailModal({
     } catch (err) {
       setNotifyState("idle");
       toast.error(err instanceof Error ? err.message : "خطا در ثبت اعلان");
+    }
+  }
+
+  async function handleNotifyVariant(value: number) {
+    if (!product) return;
+    setNotifyingVariant(value);
+    try {
+      const endpoint = await subscribeToPush();
+      await apiFetch("/api/notify-me", {
+        method: "POST",
+        body: JSON.stringify({
+          productId: product._id,
+          subscriptionEndpoint: endpoint,
+          variant: value,
+        }),
+      });
+      setNotifiedVariants((prev) => new Set(prev).add(value));
+      toast.success("ثبت شد!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "خطا در ثبت اعلان");
+    } finally {
+      setNotifyingVariant(null);
     }
   }
 
@@ -131,6 +158,54 @@ export function ProductDetailModal({
             <dl className="grid grid-cols-2 gap-3">
               {fields.map((f) => {
                 const value = product[f.key];
+                if (f.kind === "variants") {
+                  const vk = f.variantKey as string;
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const opts = value as { available: boolean; [k: string]: any }[] | undefined;
+                  if (!Array.isArray(opts) || opts.length === 0) return null;
+                  return (
+                    <div key={f.key} className="col-span-2 space-y-1.5">
+                      <dt className="text-xs text-muted-foreground">
+                        {f.label}
+                        {f.unit ? ` (${f.unit})` : ""}
+                      </dt>
+                      <dd className="flex flex-wrap gap-1.5">
+                        {opts.map((o, i) => {
+                          const val = Number(o[vk]);
+                          if (o.available) {
+                            return (
+                              <Badge key={i} variant="outline">
+                                {String(o[vk])}
+                              </Badge>
+                            );
+                          }
+                          const done = notifiedVariants.has(val);
+                          return (
+                            <button
+                              key={i}
+                              type="button"
+                              disabled={done || notifyingVariant === val}
+                              onClick={() => handleNotifyVariant(val)}
+                              title="موجود شد خبرم کن"
+                              className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-opacity hover:opacity-100"
+                            >
+                              <span className={cn(!done && "line-through opacity-70")}>
+                                {String(o[vk])}
+                              </span>
+                              {notifyingVariant === val ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : done ? (
+                                <Check className="h-3 w-3 text-primary" />
+                              ) : (
+                                <BellRing className="h-3 w-3" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </dd>
+                    </div>
+                  );
+                }
                 if (f.kind === "notes") {
                   if (!Array.isArray(value) || value.length === 0) return null;
                   return (
@@ -167,7 +242,7 @@ export function ProductDetailModal({
               })}
             </dl>
 
-            {!product.available && (
+            {!variantField && !product.available && (
               <Button
                 className="w-full"
                 size="lg"

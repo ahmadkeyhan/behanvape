@@ -6,7 +6,7 @@ import { Category } from "@/models/Category";
 import { requireRole, apiError } from "@/lib/api-auth";
 import { serialize } from "@/lib/serialize";
 import { toProductView } from "@/lib/product-view";
-import { parseProductPayload } from "@/lib/product-schemas";
+import { parseProductPayload, deriveAvailable } from "@/lib/product-schemas";
 import type { ProductType } from "@/lib/product-types";
 
 export const runtime = "nodejs";
@@ -41,6 +41,8 @@ export async function POST(req: NextRequest) {
     }
     const productType = category.productType as ProductType;
     const data = parseProductPayload(productType, raw);
+    // For variant types (juice/cartridge) availability is derived from the options.
+    data.available = deriveAvailable(productType, data);
 
     const last = await Product.findOne({ category: category._id })
       .sort({ order: -1 })
