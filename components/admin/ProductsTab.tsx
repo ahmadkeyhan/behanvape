@@ -252,11 +252,11 @@ function SortableProductRow({
     <li
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
+      className="flex items-start gap-3 rounded-lg border border-border bg-card p-3"
     >
       <button
         type="button"
-        className="touch-none cursor-grab p-1 text-muted-foreground hover:text-foreground"
+        className="mt-1 shrink-0 touch-none cursor-grab p-1 text-muted-foreground hover:text-foreground"
         aria-label="جابه‌جایی"
         {...attributes}
         {...listeners}
@@ -275,24 +275,28 @@ function SortableProductRow({
           />
         )}
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="font-medium leading-6 break-words">{product.title}</p>
-        <p className="text-xs text-muted-foreground">{formatPrice(product.price)}</p>
-      </div>
-      <div className="flex items-center gap-2">
-        <AvailabilityToggles product={product} />
-        <Button variant="ghost" size="icon" onClick={onEdit} aria-label="ویرایش">
-          <Pencil className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onDelete}
-          aria-label="حذف"
-          className="text-destructive hover:text-destructive"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="min-w-0">
+          <p className="font-medium leading-6 break-words">{product.title}</p>
+          <p className="text-xs text-muted-foreground">{formatPrice(product.price)}</p>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <AvailabilityToggles product={product} />
+          <div className="flex shrink-0 items-center">
+            <Button variant="ghost" size="icon" onClick={onEdit} aria-label="ویرایش">
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onDelete}
+              aria-label="حذف"
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
     </li>
   );

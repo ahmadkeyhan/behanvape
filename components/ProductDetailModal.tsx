@@ -18,6 +18,7 @@ import { PRODUCT_TYPE_FIELDS, getVariantField } from "@/lib/product-types";
 import { subscribeToPush } from "@/lib/push-client";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { VariantStrengthCard } from "@/components/VariantStrengthCard";
 import type { PublicProduct } from "@/lib/public-data";
 
 export function ProductDetailModal({
@@ -31,14 +32,10 @@ export function ProductDetailModal({
 }) {
   const [activeImg, setActiveImg] = useState(0);
   const [notifyState, setNotifyState] = useState<"idle" | "loading" | "done">("idle");
-  const [notifyingVariant, setNotifyingVariant] = useState<number | null>(null);
-  const [notifiedVariants, setNotifiedVariants] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     setActiveImg(0);
     setNotifyState("idle");
-    setNotifyingVariant(null);
-    setNotifiedVariants(new Set());
   }, [product?._id]);
 
   if (!product) return null;
@@ -64,27 +61,6 @@ export function ProductDetailModal({
     }
   }
 
-  async function handleNotifyVariant(value: number) {
-    if (!product) return;
-    setNotifyingVariant(value);
-    try {
-      const endpoint = await subscribeToPush();
-      await apiFetch("/api/notify-me", {
-        method: "POST",
-        body: JSON.stringify({
-          productId: product._id,
-          subscriptionEndpoint: endpoint,
-          variant: value,
-        }),
-      });
-      setNotifiedVariants((prev) => new Set(prev).add(value));
-      toast.success("ثبت شد!");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "خطا در ثبت اعلان");
-    } finally {
-      setNotifyingVariant(null);
-    }
-  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -138,14 +114,14 @@ export function ProductDetailModal({
             </DialogHeader>
 
             <div className="flex items-center justify-between">
-              {product.available ? (
+              {variantField || product.available ? (
                 <span className="text-lg font-bold text-primary">
                   {formatPrice(product.price)}
                 </span>
               ) : (
                 <Badge variant="secondary">ناموجود</Badge>
               )}
-              {product.available && <Badge variant="success">موجود</Badge>}
+              {!variantField && product.available && <Badge variant="success">موجود</Badge>}
             </div>
 
             {product.description && (
@@ -159,51 +135,18 @@ export function ProductDetailModal({
               {fields.map((f) => {
                 const value = product[f.key];
                 if (f.kind === "variants") {
-                  const vk = f.variantKey as string;
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const opts = value as { available: boolean; [k: string]: any }[] | undefined;
                   if (!Array.isArray(opts) || opts.length === 0) return null;
                   return (
-                    <div key={f.key} className="col-span-2 space-y-1.5">
-                      <dt className="text-xs text-muted-foreground">
-                        {f.label}
-                        {f.unit ? ` (${f.unit})` : ""}
-                      </dt>
-                      <dd className="flex flex-wrap gap-1.5">
-                        {opts.map((o, i) => {
-                          const val = Number(o[vk]);
-                          if (o.available) {
-                            return (
-                              <Badge key={i} variant="outline">
-                                {String(o[vk])}
-                              </Badge>
-                            );
-                          }
-                          const done = notifiedVariants.has(val);
-                          return (
-                            <button
-                              key={i}
-                              type="button"
-                              disabled={done || notifyingVariant === val}
-                              onClick={() => handleNotifyVariant(val)}
-                              title="موجود شد خبرم کن"
-                              className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-opacity hover:opacity-100"
-                            >
-                              <span className={cn(!done && "line-through opacity-70")}>
-                                {String(o[vk])}
-                              </span>
-                              {notifyingVariant === val ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : done ? (
-                                <Check className="h-3 w-3 text-primary" />
-                              ) : (
-                                <BellRing className="h-3 w-3" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </dd>
-                    </div>
+                    <VariantStrengthCard
+                      key={f.key}
+                      productId={product._id}
+                      label={f.label}
+                      unit={f.unit}
+                      variantKey={f.variantKey as string}
+                      options={opts}
+                    />
                   );
                 }
                 if (f.kind === "notes") {

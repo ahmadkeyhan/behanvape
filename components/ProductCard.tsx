@@ -54,11 +54,11 @@ export function ProductCard({
         {product.brand && <span className="text-xs text-muted-foreground">{product.brand}</span>}
         <h3 className="line-clamp-2 text-sm font-medium leading-6">{product.title}</h3>
         {variantField && variants && variants.length > 0 && (
-          <div className="flex flex-wrap gap-1 pt-0.5">
+          <div className="flex flex-wrap items-center gap-1 pt-0.5">
             {variants.map((o, i) => (
               <Badge
                 key={i}
-                variant="outline"
+                variant="secondary"
                 className={cn(
                   "px-1.5 py-0 text-[10px] font-normal",
                   !o.available && "opacity-40 line-through",
@@ -71,7 +71,7 @@ export function ProductCard({
           </div>
         )}
         {product.notes && product.notes.length > 0 && (
-          <div className="flex flex-wrap gap-1 pt-0.5">
+          <div className="flex flex-wrap items-center gap-1 pt-0.5">
             {product.notes.slice(0, 3).map((n) => (
               <Badge key={n} variant="outline" className="px-1.5 py-0 text-[10px] font-normal">
                 {n}
