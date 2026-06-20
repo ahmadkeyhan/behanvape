@@ -37,6 +37,9 @@
     --ring: 258 90% 66%;
 
     --radius: 0.75rem;
+
+    /* Brand gradient: fuchsia -> violet. Drop-in for the solid primary. */
+    --grad-primary: linear-gradient(135deg, rgb(190, 78, 241) 0%, rgba(137, 90, 246, 1) 70%);
   }
 }
 
@@ -70,5 +73,44 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Primary -> brand gradient. Solid `bg-primary`/`border-primary` become the
+   * gradient app-wide; `/opacity` tints (bg-primary/15) and state variants
+   * (data-[state=...]:bg-primary) are separate selectors handled per-component. */
+  .bg-primary {
+    background-image: var(--grad-primary);
+  }
+  /* Gradient border that follows the element's own radius (border-image can't).
+   * A masked ::before paints a 1px ring; content/background stay untouched. */
+  .border-primary {
+    position: relative;
+    border-color: transparent;
+  }
+  .border-primary::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--grad-primary);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  /* Gradient-filled text glyphs (wordmark, prices). Keeps `color` so child
+   * icons that read currentColor stay visible. */
+  .text-gradient {
+    background-image: var(--grad-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
   }
 }

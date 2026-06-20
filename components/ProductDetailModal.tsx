@@ -115,7 +115,7 @@ export function ProductDetailModal({
 
             <div className="flex items-center justify-between">
               {variantField || product.available ? (
-                <span className="text-lg font-bold text-primary">
+                <span className="text-lg font-bold text-gradient">
                   {formatPrice(product.price)}
                 </span>
               ) : (

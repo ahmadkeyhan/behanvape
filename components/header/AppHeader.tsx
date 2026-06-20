@@ -24,7 +24,7 @@ const Logo = () => (
       <Image src="/violetLogo.png" alt="لوگوی بهان‌ویپ" width={36} height={36} className="h-9 w-9" />
     </span>
     <span className="text-xl font-bold tracking-tight">
-      Behan<span className="text-primary">Vape</span>
+      Behan<span className="text-gradient">Vape</span>
     </span>
   </Link>
 );

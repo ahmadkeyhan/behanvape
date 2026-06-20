@@ -30,7 +30,7 @@ export function SiteFooter() {
             className="h-12 w-12"
           />
           <span className="text-2xl font-bold tracking-tight">
-            Behan<span className="text-primary">Vape</span>
+            Behan<span className="text-gradient">Vape</span>
           </span>
         </div>
 

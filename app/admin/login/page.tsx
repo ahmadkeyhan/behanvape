@@ -55,7 +55,7 @@ function LoginForm() {
             <Image src="/violetLogo.png" alt="behan vape logo" fill />
           </div>
           <CardTitle className="text-xl">
-            ورود به پنل <span className="text-primary font-extrabold">بهان ویپ</span>
+            ورود به پنل <span className="text-gradient font-extrabold">بهان ویپ</span>
           </CardTitle>
         </CardHeader>
         <CardContent>

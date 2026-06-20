@@ -81,7 +81,7 @@ export function ProductCard({
         )}
         <div className="mt-auto pt-2">
           {product.available ? (
-            <span className="font-semibold text-primary">{formatPrice(product.price)}</span>
+            <span className="font-semibold text-gradient">{formatPrice(product.price)}</span>
           ) : (
             <span className="text-sm text-muted-foreground">به‌زودی موجود می‌شود</span>
           )}

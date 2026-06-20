@@ -7,9 +7,9 @@ import { UsersTab } from "@/components/admin/UsersTab";
 import { PasswordTab } from "@/components/admin/PasswordTab";
 import { NotificationsTab } from "@/components/admin/NotificationsTab";
 
-// Chip-style triggers: inactive = bordered/muted, active = solid violet (clearly distinct).
+// Chip-style triggers: inactive = bordered/muted, active = brand gradient fill.
 const TAB =
-  "h-9 rounded-full border border-border bg-transparent px-4 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none";
+  "h-9 rounded-full border border-border bg-transparent px-4 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground data-[state=active]:border-transparent data-[state=active]:bg-[image:var(--grad-primary)] data-[state=active]:text-primary-foreground data-[state=active]:shadow-none";
 
 export function AdminTabs() {
   return (

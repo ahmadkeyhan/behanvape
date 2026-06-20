@@ -50,7 +50,7 @@ export function Hero() {
           variants={item}
           className="text-4xl font-bold tracking-tight sm:text-6xl"
         >
-          Behan<span className="text-primary">Vape</span>
+          Behan<span className="text-gradient">Vape</span>
         </motion.h1>
         <motion.p
           variants={item}
