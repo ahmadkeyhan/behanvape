@@ -45,6 +45,15 @@ export function ProductCard({
       <div className="flex flex-1 flex-col gap-1 p-3">
         {product.brand && <span className="text-xs text-muted-foreground">{product.brand}</span>}
         <h3 className="line-clamp-2 text-sm font-medium leading-6">{product.title}</h3>
+        {product.notes && product.notes.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-0.5">
+            {product.notes.slice(0, 3).map((n) => (
+              <Badge key={n} variant="outline" className="px-1.5 py-0 text-[10px] font-normal">
+                {n}
+              </Badge>
+            ))}
+          </div>
+        )}
         <div className="mt-auto pt-2">
           {product.available ? (
             <span className="font-semibold text-primary">{formatPrice(product.price)}</span>

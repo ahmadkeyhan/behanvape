@@ -42,7 +42,8 @@ const juiceSchema = new Schema({
 
 const vapeSchema = new Schema({
   wattage: { type: Number },
-  capacity: { type: Number }, // ml
+  capacity: { type: Number }, // tank ml
+  batteryCapacity: { type: Number }, // mAh
   screen: { type: Boolean, default: false }, // has a built-in display
 });
 

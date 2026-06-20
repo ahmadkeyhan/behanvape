@@ -55,7 +55,14 @@ export const PRODUCT_TYPE_FIELDS: Record<ProductType, AttrField[]> = {
   ],
   vape: [
     { key: "wattage", label: "توان", unit: "وات", kind: "number", filter: "range" },
-    { key: "capacity", label: "ظرفیت", unit: "میلی‌لیتر", kind: "number", filter: "range" },
+    { key: "capacity", label: "ظرفیت مخزن", unit: "میلی‌لیتر", kind: "number", filter: "range" },
+    {
+      key: "batteryCapacity",
+      label: "ظرفیت باتری",
+      unit: "میلی‌آمپر",
+      kind: "number",
+      filter: "range",
+    },
     { key: "screen", label: "نمایشگر", kind: "boolean", filter: "boolean" },
   ],
   disposable: [

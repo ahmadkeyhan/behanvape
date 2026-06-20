@@ -18,6 +18,7 @@ const FEATURED = [
   { label: "پاد", image: "/pod.jpg", match: ["pod", "پاد"], fallbackSlug: "pod" },
   { label: "سالت نیکوتین", image: "/salt.jpg", match: ["salt", "سالت نیکوتین"], fallbackSlug: "salt" },
   { label: "آیکاس", image: "/iqos.jpg", match: ["iqos", "آیکاس"], fallbackSlug: "iqos" },
+  { label: "کویل", image: "/coil.jpg", match: ["coil", "کویل"], fallbackSlug: "coil" },
 ];
 
 export default async function HomePage() {

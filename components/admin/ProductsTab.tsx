@@ -293,7 +293,7 @@ function SortableProductRow({
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{product.title}</p>
+        <p className="font-medium leading-6 break-words">{product.title}</p>
         <p className="text-xs text-muted-foreground">{formatPrice(product.price)}</p>
       </div>
       <div className="flex items-center gap-2">

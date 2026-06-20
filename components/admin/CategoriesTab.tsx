@@ -27,7 +27,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -350,12 +349,7 @@ function SortableCategoryRow({
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate font-medium">{category.title}</span>
-          <Badge variant="outline" className="shrink-0 text-xs">
-            {PRODUCT_TYPE_LABELS[category.productType]}
-          </Badge>
-        </div>
+        <span className="block font-medium leading-6">{category.title}</span>
         <p className="truncate text-xs text-muted-foreground" dir="ltr">
           /{category.slug}
         </p>

@@ -34,7 +34,12 @@ export const baseProductSchema = z.object({
 // Type-specific field schemas, derived from the central PRODUCT_TYPE_FIELDS config.
 export const typeFieldSchemas: Record<ProductType, z.ZodTypeAny> = {
   juice: z.object({ volume: optionalNumber, nicotineDensity: optionalNumber, notes: notesArray }),
-  vape: z.object({ wattage: optionalNumber, capacity: optionalNumber, screen: optionalBoolean }),
+  vape: z.object({
+    wattage: optionalNumber,
+    capacity: optionalNumber,
+    batteryCapacity: optionalNumber,
+    screen: optionalBoolean,
+  }),
   disposable: z.object({
     puffs: optionalNumber,
     nicotineDensity: optionalNumber,
