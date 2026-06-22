@@ -45,11 +45,17 @@ const juiceSchema = new Schema({
   notes: { type: [String], default: [] },
 });
 
+// colors as variants, each with its own availability (color = hex swatch + name)
+const colorOptionSchema = new Schema(
+  { color: { type: String }, name: { type: String, default: "" }, available: { type: Boolean, default: true } },
+  { _id: false },
+);
 const vapeSchema = new Schema({
   wattage: { type: Number },
   capacity: { type: Number }, // tank ml
   batteryCapacity: { type: Number }, // mAh
   screen: { type: Boolean, default: false }, // has a built-in display
+  colorOptions: { type: [colorOptionSchema], default: [] },
 });
 
 const disposableSchema = new Schema({

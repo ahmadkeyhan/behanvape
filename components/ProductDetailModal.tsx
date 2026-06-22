@@ -19,6 +19,7 @@ import { subscribeToPush } from "@/lib/push-client";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { VariantStrengthCard } from "@/components/VariantStrengthCard";
+import { ColorVariantCard } from "@/components/ColorVariantCard";
 import type { PublicProduct } from "@/lib/public-data";
 
 export function ProductDetailModal({
@@ -43,6 +44,10 @@ export function ProductDetailModal({
   const fields = PRODUCT_TYPE_FIELDS[product.productType] ?? [];
   const images = product.imageUrls?.length ? product.imageUrls : [];
   const variantField = getVariantField(product.productType);
+  // A product behaves as a variant product only when it actually has options. Optional
+  // color variants (vape) may be empty -> treat as a plain whole-product (single badge/notify).
+  const variantOpts = variantField ? product[variantField.key] : undefined;
+  const hasVariants = Array.isArray(variantOpts) && variantOpts.length > 0;
 
   async function handleNotify() {
     if (!product) return;
@@ -114,14 +119,14 @@ export function ProductDetailModal({
             </DialogHeader>
 
             <div className="flex items-center justify-between">
-              {variantField || product.available ? (
+              {hasVariants || product.available ? (
                 <span className="text-lg font-bold text-gradient">
                   {formatPrice(product.price)}
                 </span>
               ) : (
                 <Badge variant="secondary">ناموجود</Badge>
               )}
-              {!variantField && product.available && <Badge variant="success">موجود</Badge>}
+              {!hasVariants && product.available && <Badge variant="success">موجود</Badge>}
             </div>
 
             {product.description && (
@@ -138,6 +143,16 @@ export function ProductDetailModal({
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const opts = value as { available: boolean; [k: string]: any }[] | undefined;
                   if (!Array.isArray(opts) || opts.length === 0) return null;
+                  if (f.variantType === "color") {
+                    return (
+                      <ColorVariantCard
+                        key={f.key}
+                        productId={product._id}
+                        label={f.label}
+                        options={opts}
+                      />
+                    );
+                  }
                   return (
                     <VariantStrengthCard
                       key={f.key}
@@ -185,7 +200,7 @@ export function ProductDetailModal({
               })}
             </dl>
 
-            {!variantField && !product.available && (
+            {!hasVariants && !product.available && (
               <Button
                 className="w-full"
                 size="lg"

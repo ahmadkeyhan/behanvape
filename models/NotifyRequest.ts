@@ -4,9 +4,10 @@ const NotifyRequestSchema = new Schema(
   {
     product: { type: Schema.Types.ObjectId, ref: "Product", required: true },
     subscription: { type: Schema.Types.ObjectId, ref: "PushSubscription", required: true },
-    // For variant products (juice/cartridge): the specific numeric value the user wants alerted.
+    // For variant products: the specific value the user wants alerted — a number
+    // (juice strength / cartridge resistance) or a string (vape color hex).
     // null for whole-product (non-variant) alerts.
-    variant: { type: Number, default: null },
+    variant: { type: Schema.Types.Mixed, default: null },
   },
   { timestamps: { createdAt: true, updatedAt: false } },
 );

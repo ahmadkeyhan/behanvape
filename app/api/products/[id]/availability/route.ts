@@ -13,8 +13,12 @@ import { deriveAvailable } from "@/lib/product-schemas";
 
 export const runtime = "nodejs";
 
-// `variant` present -> toggle one variant (juice strength / cartridge resistance). Else whole product.
-const schema = z.object({ available: z.boolean().optional(), variant: z.number().optional() });
+// `variant` present -> toggle one variant (juice strength / cartridge resistance / vape color hex).
+// Else whole product. Variant value is numeric for number variants, a string (hex) for colors.
+const schema = z.object({
+  available: z.boolean().optional(),
+  variant: z.union([z.number(), z.string()]).optional(),
+});
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -50,7 +54,11 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       await product.save();
 
       if (!was && opt.available) {
-        const label = `${variant}${vf.unit ? " " + vf.unit : ""}`;
+        // color variants are labelled by their name; numeric variants by value + unit
+        const label =
+          vf.variantType === "color"
+            ? opt.name || String(variant)
+            : `${variant}${vf.unit ? " " + vf.unit : ""}`;
         await sendRestockNotifications(id, product.title, product.category, variant, label);
       }
       return NextResponse.json(serialize(product.toObject()));
@@ -79,7 +87,7 @@ async function sendRestockNotifications(
   productId: string,
   productTitle: string,
   categoryId: unknown,
-  variant: number | null,
+  variant: number | string | null,
   variantLabel?: string,
 ) {
   const requests = await NotifyRequest.find({ product: productId, variant: variant ?? null })

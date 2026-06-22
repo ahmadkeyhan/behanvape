@@ -32,6 +32,8 @@ export const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
 
 export type AttrKind = "number" | "notes" | "boolean" | "variants";
 export type FilterKind = "range" | "multi" | "none" | "boolean";
+/** "number" variants carry a numeric value (density/resistance); "color" variants carry a hex+name swatch. */
+export type VariantType = "number" | "color";
 
 export interface AttrField {
   /** document field name on the discriminator */
@@ -45,9 +47,29 @@ export interface AttrField {
   /** how this field appears in the public filter UI */
   filter: FilterKind;
   optional?: boolean;
-  /** for kind "variants": the numeric subfield name on each option (e.g. "density"). Each option also has a boolean `available`. */
+  /** for kind "variants": the identity subfield on each option (e.g. "density", or "color"=hex). Each option also has a boolean `available`. */
   variantKey?: string;
+  /** for kind "variants": numeric (default) or color-swatch flavor. Color variants also carry a `name`. */
+  variantType?: VariantType;
 }
+
+/** Predefined colors the admin picks from for color variants (vape/pod). */
+export const COLOR_PALETTE: { name: string; hex: string }[] = [
+  { name: "مشکی", hex: "#1a1a1a" },
+  { name: "سفید", hex: "#f5f5f5" },
+  { name: "نقره‌ای", hex: "#c0c0c0" },
+  { name: "خاکستری", hex: "#6b7280" },
+  { name: "طلایی", hex: "#d4af37" },
+  { name: "قرمز", hex: "#dc2626" },
+  { name: "آبی", hex: "#2563eb" },
+  { name: "فیروزه‌ای", hex: "#06b6d4" },
+  { name: "سبز", hex: "#16a34a" },
+  { name: "بنفش", hex: "#7c3aed" },
+  { name: "صورتی", hex: "#ec4899" },
+  { name: "نارنجی", hex: "#ea580c" },
+  { name: "زرد", hex: "#eab308" },
+  { name: "قهوه‌ای", hex: "#92400e" },
+];
 
 export const PRODUCT_TYPE_FIELDS: Record<ProductType, AttrField[]> = {
   juice: [
@@ -74,6 +96,16 @@ export const PRODUCT_TYPE_FIELDS: Record<ProductType, AttrField[]> = {
       filter: "range",
     },
     { key: "screen", label: "نمایشگر", kind: "boolean", filter: "boolean" },
+    // colors as variants — optional; each color has its own availability. Not a filter.
+    {
+      key: "colorOptions",
+      label: "رنگ",
+      kind: "variants",
+      filter: "none",
+      optional: true,
+      variantKey: "color",
+      variantType: "color",
+    },
   ],
   disposable: [
     { key: "puffs", label: "تعداد پاف", unit: "پاف", kind: "number", filter: "range" },

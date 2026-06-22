@@ -53,23 +53,40 @@ export function ProductCard({
       <div className="flex flex-1 flex-col gap-1 p-3">
         {product.brand && <span className="text-xs text-muted-foreground">{product.brand}</span>}
         <h3 className="line-clamp-2 text-sm font-medium leading-6">{product.title}</h3>
-        {variantField && variants && variants.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1 pt-0.5">
-            {variants.map((o, i) => (
-              <Badge
-                key={i}
-                variant="secondary"
-                className={cn(
-                  "px-1.5 py-0 text-[10px] font-normal",
-                  !o.available && "opacity-40 line-through",
-                )}
-              >
-                {String(o[variantField.variantKey as string])}
-                {variantField.unit ? ` ${variantField.unit}` : ""}
-              </Badge>
-            ))}
-          </div>
-        )}
+        {variantField &&
+          variants &&
+          variants.length > 0 &&
+          (variantField.variantType === "color" ? (
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              {variants.map((o, i) => (
+                <span
+                  key={i}
+                  title={String(o.name ?? "")}
+                  className={cn(
+                    "h-4 w-4 rounded-full border border-border",
+                    !o.available && "opacity-40",
+                  )}
+                  style={{ backgroundColor: String(o[variantField.variantKey as string]) }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-1 pt-0.5">
+              {variants.map((o, i) => (
+                <Badge
+                  key={i}
+                  variant="secondary"
+                  className={cn(
+                    "px-1.5 py-0 text-[10px] font-normal",
+                    !o.available && "opacity-40 line-through",
+                  )}
+                >
+                  {String(o[variantField.variantKey as string])}
+                  {variantField.unit ? ` ${variantField.unit}` : ""}
+                </Badge>
+              ))}
+            </div>
+          ))}
         {product.notes && product.notes.length > 0 && (
           <div className="flex flex-wrap items-center gap-1 pt-0.5">
             {product.notes.slice(0, 3).map((n) => (

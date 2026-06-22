@@ -30,9 +30,10 @@ export type PublicProduct = Record<string, any> & {
   imageUrls: string[];
   productType: ProductType;
   notes?: string[];
-  // variant arrays (juice / cartridge); each option carries its own availability
+  // variant arrays (juice / cartridge / vape colors); each option carries its own availability
   nicotineOptions?: { density: number; available: boolean }[];
   resistanceOptions?: { resistance: number; available: boolean }[];
+  colorOptions?: { color: string; name: string; available: boolean }[];
   createdAt: string;
 };
 
@@ -114,7 +115,7 @@ export function parseFilters(productType: ProductType, sp: SP): ProductFilters {
         .filter((n) => !Number.isNaN(n));
     } else if (f.filter === "multi" && f.kind === "notes") {
       filters.notes[f.key] = toArray(sp[`f_${f.key}`]);
-    } else if (f.kind === "variants") {
+    } else if (f.kind === "variants" && f.filter !== "none") {
       filters.multi[f.key] = toArray(sp[`f_${f.key}`])
         .map(Number)
         .filter((n) => !Number.isNaN(n));
@@ -177,7 +178,7 @@ function computeFacets(productType: ProductType, products: PublicProduct[]): Fac
         new Set(products.flatMap((p) => (Array.isArray(p[f.key]) ? p[f.key] : []))),
       ).sort((a: string, b: string) => a.localeCompare(b, "fa"));
       fields[f.key] = { kind: "notes", values };
-    } else if (f.kind === "variants") {
+    } else if (f.kind === "variants" && f.filter !== "none") {
       const vk = f.variantKey as string;
       const values = Array.from(
         new Set(
@@ -226,7 +227,7 @@ function matchFilters(
         const have: string[] = Array.isArray(p[f.key]) ? p[f.key] : [];
         if (!sel.some((s) => have.includes(s))) return false;
       }
-    } else if (f.kind === "variants") {
+    } else if (f.kind === "variants" && f.filter !== "none") {
       const sel = filters.multi[f.key];
       if (sel?.length) {
         const vk = f.variantKey as string;

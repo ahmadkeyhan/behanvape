@@ -11,8 +11,9 @@ export const runtime = "nodejs";
 const schema = z.object({
   productId: z.string().min(1),
   subscriptionEndpoint: z.string().url(),
-  // specific variant value (juice strength / cartridge resistance), if this is a variant product
-  variant: z.number().optional(),
+  // specific variant value if this is a variant product: a number (juice strength /
+  // cartridge resistance) or a string (vape color hex)
+  variant: z.union([z.number(), z.string()]).optional(),
 });
 
 export async function POST(req: NextRequest) {

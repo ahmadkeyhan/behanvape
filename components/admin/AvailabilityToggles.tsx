@@ -23,11 +23,18 @@ export function AvailabilityToggles({
 }) {
   const vf = getVariantField(product.productType);
   const vk = vf?.variantKey ?? "value";
+  const isColor = vf?.variantType === "color";
 
-  const [options, setOptions] = useState<{ value: number; available: boolean }[]>(() =>
+  const [options, setOptions] = useState<
+    { value: string | number; name?: string; available: boolean }[]
+  >(() =>
     vf && Array.isArray(product[vf.key])
       ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        product[vf.key].map((o: any) => ({ value: o?.[vk], available: o?.available !== false }))
+        product[vf.key].map((o: any) => ({
+          value: o?.[vk],
+          name: isColor ? (o?.name ?? "") : undefined,
+          available: o?.available !== false,
+        }))
       : [],
   );
   const [whole, setWhole] = useState<boolean>(product.available);
@@ -55,22 +62,31 @@ export function AvailabilityToggles({
     }
   }
 
-  if (vf) {
-    if (options.length === 0) {
-      return <span className="text-xs text-muted-foreground">بدون گزینه</span>;
-    }
+  // Per-variant switches only when the product actually has options (optional color
+  // variants may be absent -> fall through to the single whole-product switch).
+  if (vf && options.length > 0) {
     return (
       <div className="flex flex-col items-stretch gap-1.5">
         {options.map((o, i) => (
           <label key={i} className="flex items-center justify-between gap-3 text-xs">
-            <span className="text-muted-foreground" dir="ltr">
-              {o.value}
-              {vf.unit ? ` ${vf.unit}` : ""}
-            </span>
+            {isColor ? (
+              <span className="flex items-center gap-2">
+                <span
+                  className="h-4 w-4 shrink-0 rounded-full border border-border"
+                  style={{ backgroundColor: String(o.value) }}
+                />
+                <span className="text-muted-foreground">{o.name || String(o.value)}</span>
+              </span>
+            ) : (
+              <span className="text-muted-foreground" dir="ltr">
+                {o.value}
+                {vf.unit ? ` ${vf.unit}` : ""}
+              </span>
+            )}
             <Switch
               checked={o.available}
               disabled={busy}
-              aria-label={`وضعیت ${o.value}`}
+              aria-label={`وضعیت ${o.name || o.value}`}
               onCheckedChange={(c) => {
                 const prev = options;
                 const next = options.map((x, j) => (j === i ? { ...x, available: c } : x));

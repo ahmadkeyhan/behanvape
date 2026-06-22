@@ -41,6 +41,23 @@ function variantArray(valueKey: string) {
   );
 }
 
+/** Array of {color:string(hex), name:string, available:boolean} color variants; drops rows with a blank color. */
+function colorVariantArray() {
+  const option = z.object({
+    color: z.string().trim().min(1),
+    name: z.string().trim().optional().default(""),
+    available: z.preprocess((v) => (v === undefined || v === null ? true : v), z.boolean()),
+  });
+  return z.preprocess(
+    (v) =>
+      Array.isArray(v)
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          v.filter((o: any) => o != null && typeof o.color === "string" && o.color.trim() !== "")
+        : [],
+    z.array(option).optional().default([]),
+  );
+}
+
 export const baseProductSchema = z.object({
   title: z.string().trim().min(1, "نام محصول الزامی است."),
   description: z.string().trim().optional().default(""),
@@ -66,6 +83,7 @@ export const typeFieldSchemas: Record<ProductType, z.ZodTypeAny> = {
     capacity: optionalNumber,
     batteryCapacity: optionalNumber,
     screen: optionalBoolean,
+    colorOptions: colorVariantArray(),
   }),
   disposable: z.object({
     puffs: optionalNumber,
@@ -118,13 +136,17 @@ export function getProductFormSchema(productType: ProductType) {
   return z.object(shape);
 }
 
-/** Derived availability: for variant types it's "any option available"; otherwise the base flag. */
+/**
+ * Derived availability: when a product has variant options, it's "any option available".
+ * When the variant field is empty (optional variants like vape colors, or a variant type
+ * with nothing entered) fall back to the base `available` flag.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function deriveAvailable(productType: ProductType, data: Record<string, any>): boolean {
   const vf = getVariantField(productType);
   if (vf) {
     const opts = data[vf.key];
-    return Array.isArray(opts) && opts.some((o) => o?.available);
+    if (Array.isArray(opts) && opts.length > 0) return opts.some((o) => o?.available);
   }
   return data.available ?? true;
 }
