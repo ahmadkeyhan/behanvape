@@ -97,6 +97,7 @@ export const typeFieldSchemas: Record<ProductType, z.ZodTypeAny> = {
     batteryCapacity: optionalNumber,
     usesPerCharge: optionalNumber,
     chargingTime: optionalNumber,
+    colorOptions: colorVariantArray(),
   }),
   other: z.object({}),
 };

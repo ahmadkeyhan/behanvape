@@ -161,6 +161,16 @@ export const PRODUCT_TYPE_FIELDS: Record<ProductType, AttrField[]> = {
       filter: "range",
       optional: true,
     },
+    // colors as variants — optional; each color has its own availability. Not a filter.
+    {
+      key: "colorOptions",
+      label: "رنگ",
+      kind: "variants",
+      filter: "none",
+      optional: true,
+      variantKey: "color",
+      variantType: "color",
+    },
   ],
   // "other" uses only the base product fields (title/description/brand/price/images/available).
   other: [],

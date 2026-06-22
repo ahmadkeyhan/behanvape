@@ -23,8 +23,9 @@ import { GripVertical, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
 import { formatPrice } from "@/lib/format";
-import { PRODUCT_TYPE_LABELS, type ProductType } from "@/lib/product-types";
+import { type ProductType } from "@/lib/product-types";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -148,7 +149,7 @@ export function ProductsTab() {
             <SelectContent>
               {categories.map((c) => (
                 <SelectItem key={c._id} value={c._id}>
-                  {c.title} — {PRODUCT_TYPE_LABELS[c.productType]}
+                  {c.title}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -279,6 +280,17 @@ function SortableProductRow({
         <div className="min-w-0">
           <p className="font-medium leading-6 break-words">{product.title}</p>
           <p className="text-xs text-muted-foreground">{formatPrice(product.price)}</p>
+          {product.productType === "juice" &&
+            Array.isArray(product.notes) &&
+            product.notes.length > 0 && (
+              <div className="mt-1 flex flex-wrap items-center gap-1">
+                {product.notes.map((n: string) => (
+                  <Badge key={n} variant="outline" className="px-1.5 py-0 text-[10px] font-normal">
+                    {n}
+                  </Badge>
+                ))}
+              </div>
+            )}
         </div>
         <div className="flex items-center justify-between gap-2">
           <AvailabilityToggles product={product} />

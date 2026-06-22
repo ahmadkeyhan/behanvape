@@ -85,6 +85,7 @@ const iqosSchema = new Schema({
   batteryCapacity: { type: Number }, // mAh
   usesPerCharge: { type: Number }, // sessions per full charge
   chargingTime: { type: Number }, // minutes
+  colorOptions: { type: [colorOptionSchema], default: [] },
 });
 
 // "other": no extra fields — base schema only (title/description/brand/price/images/available).
