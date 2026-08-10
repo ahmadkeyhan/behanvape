@@ -20,7 +20,7 @@ export function SiteFooter() {
   if (pathname.startsWith("/admin")) return null;
 
   return (
-    <footer className="mt-12 border-t border-border/60">
+    <footer className="mt-12 border-t border-border/60 pb-[env(safe-area-inset-bottom,0px)]">
       <div className="container flex flex-col items-center gap-5 py-10 text-center">
         {/* logo + wordmark */}
         <div className="flex flex-col items-center gap-2">
