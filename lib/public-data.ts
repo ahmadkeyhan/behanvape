@@ -60,6 +60,7 @@ export interface ProductFilters {
   price: { min?: number; max?: number }; // base-field price range (Toman), applies to every productType
   multi: Record<string, number[]>; // numeric multi-select fields
   notes: Record<string, string[]>; // notes multi-select fields
+  color: Record<string, string[]>; // color variant hex multi-select (palette identity)
   range: Record<string, { min?: number; max?: number }>;
   bool: Record<string, boolean>; // boolean toggle filters; true => require the attribute to be true
 }
@@ -67,6 +68,7 @@ export interface ProductFilters {
 export type FieldFacet =
   | { kind: "multi"; values: number[] }
   | { kind: "notes"; values: string[] }
+  | { kind: "color"; values: string[] }
   | { kind: "range"; min: number; max: number }
   | { kind: "boolean"; trueCount: number; falseCount: number };
 
@@ -105,6 +107,7 @@ export function parseFilters(productType: ProductType, sp: SP): ProductFilters {
     price: { min: numParam(sp.price_min), max: numParam(sp.price_max) },
     multi: {},
     notes: {},
+    color: {},
     range: {},
     bool: {},
   };
@@ -115,6 +118,8 @@ export function parseFilters(productType: ProductType, sp: SP): ProductFilters {
         .filter((n) => !Number.isNaN(n));
     } else if (f.filter === "multi" && f.kind === "notes") {
       filters.notes[f.key] = toArray(sp[`f_${f.key}`]);
+    } else if (f.kind === "variants" && f.variantType === "color" && f.filter !== "none") {
+      filters.color[f.key] = toArray(sp[`f_${f.key}`]);
     } else if (f.kind === "variants" && f.filter !== "none") {
       filters.multi[f.key] = toArray(sp[`f_${f.key}`])
         .map(Number)
@@ -178,6 +183,18 @@ function computeFacets(productType: ProductType, products: PublicProduct[]): Fac
         new Set(products.flatMap((p) => (Array.isArray(p[f.key]) ? p[f.key] : []))),
       ).sort((a: string, b: string) => a.localeCompare(b, "fa"));
       fields[f.key] = { kind: "notes", values };
+    } else if (f.kind === "variants" && f.variantType === "color" && f.filter !== "none") {
+      const vk = f.variantKey as string;
+      const values = Array.from(
+        new Set(
+          products
+            .flatMap((p) => (Array.isArray(p[f.key]) ? p[f.key] : []))
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .map((o: any) => o?.[vk])
+            .filter((v: unknown): v is string => typeof v === "string" && v.trim() !== ""),
+        ),
+      ).sort((a, b) => a.localeCompare(b));
+      fields[f.key] = { kind: "color", values };
     } else if (f.kind === "variants" && f.filter !== "none") {
       const vk = f.variantKey as string;
       const values = Array.from(
@@ -225,6 +242,16 @@ function matchFilters(
       const sel = filters.notes[f.key];
       if (sel?.length) {
         const have: string[] = Array.isArray(p[f.key]) ? p[f.key] : [];
+        if (!sel.some((s) => have.includes(s))) return false;
+      }
+    } else if (f.kind === "variants" && f.variantType === "color" && f.filter !== "none") {
+      const sel = filters.color[f.key];
+      if (sel?.length) {
+        const vk = f.variantKey as string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const have: string[] = Array.isArray(p[f.key])
+          ? p[f.key].map((o: any) => String(o?.[vk] ?? "")).filter(Boolean)
+          : [];
         if (!sel.some((s) => have.includes(s))) return false;
       }
     } else if (f.kind === "variants" && f.filter !== "none") {

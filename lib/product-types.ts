@@ -69,6 +69,9 @@ export const COLOR_PALETTE: { name: string; hex: string }[] = [
   { name: "نارنجی", hex: "#ea580c" },
   { name: "زرد", hex: "#eab308" },
   { name: "قهوه‌ای", hex: "#92400e" },
+  { name: "رزگلد", hex: "#b76e79" },
+  { name: "گان متال", hex: "#4a4e54" },
+  { name: "استیل", hex: "#8a8f98" },
 ];
 
 export const PRODUCT_TYPE_FIELDS: Record<ProductType, AttrField[]> = {
@@ -96,12 +99,13 @@ export const PRODUCT_TYPE_FIELDS: Record<ProductType, AttrField[]> = {
       filter: "range",
     },
     { key: "screen", label: "نمایشگر", kind: "boolean", filter: "boolean" },
-    // colors as variants — optional; each color has its own availability. Not a filter.
+    // colors as variants — optional; each color has its own availability.
+    // Filter matches palette hex (`color`); `name` is display-only.
     {
       key: "colorOptions",
       label: "رنگ",
       kind: "variants",
-      filter: "none",
+      filter: "multi",
       optional: true,
       variantKey: "color",
       variantType: "color",
@@ -161,12 +165,13 @@ export const PRODUCT_TYPE_FIELDS: Record<ProductType, AttrField[]> = {
       filter: "range",
       optional: true,
     },
-    // colors as variants — optional; each color has its own availability. Not a filter.
+    // colors as variants — optional; each color has its own availability.
+    // Filter matches palette hex (`color`); `name` is display-only.
     {
       key: "colorOptions",
       label: "رنگ",
       kind: "variants",
-      filter: "none",
+      filter: "multi",
       optional: true,
       variantKey: "color",
       variantType: "color",

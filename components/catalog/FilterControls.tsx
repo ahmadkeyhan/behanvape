@@ -3,11 +3,15 @@
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatNumber } from "@/lib/format";
-import { PRODUCT_TYPE_FIELDS, type ProductType } from "@/lib/product-types";
+import { COLOR_PALETTE, PRODUCT_TYPE_FIELDS, type ProductType } from "@/lib/product-types";
 import type { Facets, ProductFilters } from "@/lib/public-data";
 import { Button } from "@/components/ui/button";
 import { RangeSlider } from "@/components/ui/range-slider";
 import { cn } from "@/lib/utils";
+
+function paletteLabel(hex: string): string {
+  return COLOR_PALETTE.find((c) => c.hex.toLowerCase() === hex.toLowerCase())?.name ?? hex;
+}
 
 function Chip({
   active,
@@ -233,6 +237,33 @@ export function FilterControls({
 
         if (facet.values.length === 0) return null;
         const paramKey = `f_${f.key}`;
+
+        if (facet.kind === "color") {
+          return (
+            <section key={f.key} className="space-y-2">
+              <h3 className="text-sm font-semibold">{f.label}</h3>
+              <div className="flex flex-wrap gap-2">
+                {facet.values.map((hex) => (
+                  <Chip
+                    key={hex}
+                    active={(filters.color[f.key] || []).includes(hex)}
+                    onClick={() => toggleCsv(paramKey, hex)}
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      <span
+                        className="h-3 w-3 shrink-0 rounded-full border border-border"
+                        style={{ backgroundColor: hex }}
+                        aria-hidden
+                      />
+                      {paletteLabel(hex)}
+                    </span>
+                  </Chip>
+                ))}
+              </div>
+            </section>
+          );
+        }
+
         return (
           <section key={f.key} className="space-y-2">
             <h3 className="text-sm font-semibold">{f.label}</h3>

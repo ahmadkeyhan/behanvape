@@ -329,7 +329,17 @@ export function ProductForm({
                     className="h-5 w-5 shrink-0 rounded-full border border-border"
                     style={{ backgroundColor: v.value }}
                   />
-                  <span className="flex-1 text-sm">{v.name || v.value}</span>
+                  <Input
+                    value={v.name ?? ""}
+                    onChange={(e) =>
+                      setVariants((prev) =>
+                        prev.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)),
+                      )
+                    }
+                    placeholder="نام نمایشی رنگ"
+                    className="h-8 flex-1 text-sm"
+                    aria-label="نام نمایشی رنگ"
+                  />
                   <label className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
                     موجود
                     <Switch
