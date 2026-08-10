@@ -99,7 +99,8 @@ export function ImagesField({
 }: {
   value: string[];
   initialPreviews?: string[];
-  onChange: (keys: string[]) => void;
+  /** Called with S3 keys and matching public preview URLs (same order). */
+  onChange: (keys: string[], previews: string[]) => void;
   folder?: Folder;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -113,8 +114,10 @@ export function ImagesField({
       const uploaded = await Promise.all(
         Array.from(files).map((f) => uploadImage(f, folder)),
       );
-      onChange([...value, ...uploaded.map((u) => u.key)]);
-      setPreviews([...previews, ...uploaded.map((u) => u.url)]);
+      const nextKeys = [...value, ...uploaded.map((u) => u.key)];
+      const nextPreviews = [...previews, ...uploaded.map((u) => u.url)];
+      setPreviews(nextPreviews);
+      onChange(nextKeys, nextPreviews);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "بارگذاری ناموفق بود.");
     } finally {
@@ -123,8 +126,10 @@ export function ImagesField({
   }
 
   function removeAt(index: number) {
-    onChange(value.filter((_, i) => i !== index));
-    setPreviews(previews.filter((_, i) => i !== index));
+    const nextKeys = value.filter((_, i) => i !== index);
+    const nextPreviews = previews.filter((_, i) => i !== index);
+    setPreviews(nextPreviews);
+    onChange(nextKeys, nextPreviews);
   }
 
   return (

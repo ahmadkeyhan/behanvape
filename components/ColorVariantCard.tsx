@@ -9,19 +9,30 @@ import { subscribeToPush } from "@/lib/push-client";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
+export type ColorOption = {
+  available: boolean;
+  color?: string;
+  name?: string;
+  image?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [k: string]: any;
+};
+
 /**
- * Modal card for color variants (vape/pod): lists every color as a swatch + name with its
+ * Modal card for color variants (vape/iqos): lists every color as a swatch + name with its
  * availability. Out-of-stock colors get a per-color "notify me" button (keyed by hex).
+ * Tapping the color row (not the notify button) can jump the gallery to that color's image.
  */
 export function ColorVariantCard({
   productId,
   label,
   options,
+  onSelectColor,
 }: {
   productId: string;
   label: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  options: { available: boolean; color?: string; name?: string; [k: string]: any }[];
+  options: ColorOption[];
+  onSelectColor?: (option: ColorOption) => void;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [notified, setNotified] = useState<Set<string>>(new Set());
@@ -58,7 +69,11 @@ export function ColorVariantCard({
           const done = notified.has(hex);
           return (
             <li key={i} className="flex items-center justify-between gap-2">
-              <span className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onSelectColor?.(o)}
+                className="flex min-w-0 flex-1 items-center gap-2 rounded-md text-start transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
                 <span
                   className={cn(
                     "h-5 w-5 shrink-0 rounded-full border border-border",
@@ -68,13 +83,13 @@ export function ColorVariantCard({
                 />
                 <span
                   className={cn(
-                    "text-sm",
+                    "truncate text-sm",
                     !o.available && "text-muted-foreground line-through",
                   )}
                 >
                   {o.name || hex}
                 </span>
-              </span>
+              </button>
               {o.available ? (
                 <Badge variant="success">موجود</Badge>
               ) : (

@@ -45,9 +45,15 @@ const juiceSchema = new Schema({
   notes: { type: [String], default: [] },
 });
 
-// colors as variants, each with its own availability (color = hex swatch + name)
+// colors as variants, each with its own availability (color = hex swatch + name).
+// optional `image` is an S3 key from the product's images[] gallery.
 const colorOptionSchema = new Schema(
-  { color: { type: String }, name: { type: String, default: "" }, available: { type: Boolean, default: true } },
+  {
+    color: { type: String },
+    name: { type: String, default: "" },
+    available: { type: Boolean, default: true },
+    image: { type: String },
+  },
   { _id: false },
 );
 const vapeSchema = new Schema({

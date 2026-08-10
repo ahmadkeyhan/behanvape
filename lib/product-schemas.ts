@@ -41,12 +41,15 @@ function variantArray(valueKey: string) {
   );
 }
 
-/** Array of {color:string(hex), name:string, available:boolean} color variants; drops rows with a blank color. */
+/** Array of {color, name, available, image?} color variants; drops rows with a blank color. */
 function colorVariantArray() {
   const option = z.object({
     color: z.string().trim().min(1),
     name: z.string().trim().optional().default(""),
     available: z.preprocess((v) => (v === undefined || v === null ? true : v), z.boolean()),
+    image: z
+      .preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), z.string().optional())
+      .optional(),
   });
   return z.preprocess(
     (v) =>

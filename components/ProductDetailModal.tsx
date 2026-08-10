@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { BellRing, Check, Loader2 } from "lucide-react";
+import { BellRing, Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -90,6 +90,32 @@ export function ProductDetailModal({
                 بدون تصویر
               </div>
             )}
+            {images.length > 1 && (
+              <>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="icon"
+                  aria-label="تصویر قبلی"
+                  className="absolute start-2 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded-full bg-background/80 shadow-sm backdrop-blur hover:bg-background"
+                  onClick={() =>
+                    setActiveImg((i) => (i - 1 + images.length) % images.length)
+                  }
+                >
+                  <ChevronLeft className="h-5 w-5 rtl:rotate-180" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="icon"
+                  aria-label="تصویر بعدی"
+                  className="absolute end-2 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded-full bg-background/80 shadow-sm backdrop-blur hover:bg-background"
+                  onClick={() => setActiveImg((i) => (i + 1) % images.length)}
+                >
+                  <ChevronRight className="h-5 w-5 rtl:rotate-180" />
+                </Button>
+              </>
+            )}
           </div>
 
           {images.length > 1 && (
@@ -150,6 +176,16 @@ export function ProductDetailModal({
                         productId={product._id}
                         label={f.label}
                         options={opts}
+                        onSelectColor={(option) => {
+                          const keys: string[] = Array.isArray(product.images)
+                            ? product.images
+                            : [];
+                          const idx =
+                            option.image && keys.length
+                              ? keys.indexOf(String(option.image))
+                              : -1;
+                          setActiveImg(idx >= 0 ? idx : 0);
+                        }}
                       />
                     );
                   }

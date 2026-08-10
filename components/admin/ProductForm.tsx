@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus, Trash2 } from "lucide-react";
@@ -79,24 +80,39 @@ export function ProductForm({
   });
 
   const [images, setImages] = useState<string[]>(initial?.images ?? []);
+  const [imagePreviews, setImagePreviews] = useState<string[]>(initial?.imageUrls ?? []);
   const [available, setAvailable] = useState<boolean>(initial?.available ?? true);
   const isColor = variantField?.variantType === "color";
-  const [variants, setVariants] = useState<{ value: string; name?: string; available: boolean }[]>(
-    () =>
-      variantField && Array.isArray(initial?.[variantField.key])
-        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          initial[variantField.key].map((o: any) =>
-            isColor
-              ? {
-                  value: String(o?.color ?? ""),
-                  name: String(o?.name ?? ""),
-                  available: o?.available !== false,
-                }
-              : { value: String(o?.[variantKey] ?? ""), available: o?.available !== false },
-          )
-        : [],
+  const [variants, setVariants] = useState<
+    { value: string; name?: string; available: boolean; image?: string }[]
+  >(() =>
+    variantField && Array.isArray(initial?.[variantField.key])
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        initial[variantField.key].map((o: any) =>
+          isColor
+            ? {
+                value: String(o?.color ?? ""),
+                name: String(o?.name ?? ""),
+                available: o?.available !== false,
+                image: typeof o?.image === "string" && o.image ? String(o.image) : undefined,
+              }
+            : { value: String(o?.[variantKey] ?? ""), available: o?.available !== false },
+        )
+      : [],
   );
   const categoryValue = (watch("category") as string) || defaultCategoryId;
+
+  function handleImagesChange(keys: string[], previews: string[]) {
+    setImages(keys);
+    setImagePreviews(previews);
+    if (isColor) {
+      setVariants((prev) =>
+        prev.map((v) =>
+          v.image && !keys.includes(v.image) ? { ...v, image: undefined } : v,
+        ),
+      );
+    }
+  }
 
   async function onSubmit(values: ProductFormValues) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -105,7 +121,12 @@ export function ProductForm({
       payload[variantField.key] = isColor
         ? variants
             .filter((v) => v.value !== "")
-            .map((v) => ({ color: v.value, name: v.name ?? "", available: v.available }))
+            .map((v) => ({
+              color: v.value,
+              name: v.name ?? "",
+              available: v.available,
+              ...(v.image ? { image: v.image } : {}),
+            }))
         : variants
             .filter((v) => v.value !== "" && !Number.isNaN(Number(v.value)))
             .map((v) => ({ [variantKey]: Number(v.value), available: v.available }));
@@ -287,7 +308,22 @@ export function ProductForm({
         </div>
       )}
 
-      {/* Color variants editor (vape/pod): pick from the palette, each color has its own availability */}
+      <div className="space-y-2">
+        <Label htmlFor="p-desc">توضیحات</Label>
+        <Textarea id="p-desc" {...register("description")} />
+      </div>
+
+      <div className="space-y-2">
+        <Label>تصاویر محصول</Label>
+        <ImagesField
+          value={images}
+          initialPreviews={initial?.imageUrls ?? []}
+          onChange={handleImagesChange}
+          folder="products"
+        />
+      </div>
+
+      {/* Color variants editor (vape/iqos): palette + optional gallery image per color */}
       {variantField && isColor && (
         <div className="space-y-3 rounded-lg border border-border p-3">
           <Label>{variantField.label}</Label>
@@ -322,66 +358,118 @@ export function ProductForm({
           {variants.length === 0 ? (
             <p className="text-xs text-muted-foreground">رنگی انتخاب نشده است.</p>
           ) : (
-            <ul className="space-y-2 border-t border-border pt-2">
+            <ul className="space-y-3 border-t border-border pt-2">
               {variants.map((v, i) => (
-                <li key={v.value} className="flex items-center gap-2">
-                  <span
-                    className="h-5 w-5 shrink-0 rounded-full border border-border"
-                    style={{ backgroundColor: v.value }}
-                  />
-                  <Input
-                    value={v.name ?? ""}
-                    onChange={(e) =>
-                      setVariants((prev) =>
-                        prev.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)),
-                      )
-                    }
-                    placeholder="نام نمایشی رنگ"
-                    className="h-8 flex-1 text-sm"
-                    aria-label="نام نمایشی رنگ"
-                  />
-                  <label className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
-                    موجود
-                    <Switch
-                      checked={v.available}
-                      onCheckedChange={(c) =>
+                <li key={v.value} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-5 w-5 shrink-0 rounded-full border border-border"
+                      style={{ backgroundColor: v.value }}
+                    />
+                    <Input
+                      value={v.name ?? ""}
+                      onChange={(e) =>
                         setVariants((prev) =>
-                          prev.map((x, j) => (j === i ? { ...x, available: c } : x)),
+                          prev.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)),
                         )
                       }
+                      placeholder="نام نمایشی رنگ"
+                      className="h-8 flex-1 text-sm"
+                      aria-label="نام نمایشی رنگ"
                     />
-                  </label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="shrink-0 text-destructive hover:text-destructive"
-                    onClick={() => setVariants((prev) => prev.filter((_, j) => j !== i))}
-                    aria-label="حذف"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                    <label className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+                      موجود
+                      <Switch
+                        checked={v.available}
+                        onCheckedChange={(c) =>
+                          setVariants((prev) =>
+                            prev.map((x, j) => (j === i ? { ...x, available: c } : x)),
+                          )
+                        }
+                      />
+                    </label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0 text-destructive hover:text-destructive"
+                      onClick={() => setVariants((prev) => prev.filter((_, j) => j !== i))}
+                      aria-label="حذف"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-1 ps-7">
+                    <p className="text-xs text-muted-foreground">تصویر این رنگ (اختیاری)</p>
+                    {images.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        ابتدا تصاویر محصول را بارگذاری کنید.
+                      </p>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        <button
+                          type="button"
+                          title="بدون تصویر"
+                          aria-label="بدون تصویر"
+                          aria-pressed={!v.image}
+                          onClick={() =>
+                            setVariants((prev) =>
+                              prev.map((x, j) => (j === i ? { ...x, image: undefined } : x)),
+                            )
+                          }
+                          className={cn(
+                            "flex h-10 w-10 items-center justify-center rounded-md border text-[10px] leading-tight",
+                            !v.image
+                              ? "border-primary ring-2 ring-primary/40"
+                              : "border-border text-muted-foreground hover:border-primary/50",
+                          )}
+                        >
+                          هیچ
+                        </button>
+                        {images.map((key, imgIdx) => (
+                          <button
+                            key={key + imgIdx}
+                            type="button"
+                            title={`تصویر ${imgIdx + 1}`}
+                            aria-label={`تصویر ${imgIdx + 1}`}
+                            aria-pressed={v.image === key}
+                            onClick={() =>
+                              setVariants((prev) =>
+                                prev.map((x, j) => (j === i ? { ...x, image: key } : x)),
+                              )
+                            }
+                            className={cn(
+                              "relative h-10 w-10 overflow-hidden rounded-md border",
+                              v.image === key
+                                ? "border-primary ring-2 ring-primary/40"
+                                : "border-border hover:border-primary/50",
+                            )}
+                          >
+                            {imagePreviews[imgIdx] ? (
+                              <Image
+                                src={imagePreviews[imgIdx]}
+                                alt=""
+                                fill
+                                sizes="40px"
+                                className="object-cover"
+                                unoptimized
+                              />
+                            ) : (
+                              <span className="flex h-full items-center justify-center text-[10px] text-muted-foreground">
+                                {imgIdx + 1}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
           )}
         </div>
       )}
-
-      <div className="space-y-2">
-        <Label htmlFor="p-desc">توضیحات</Label>
-        <Textarea id="p-desc" {...register("description")} />
-      </div>
-
-      <div className="space-y-2">
-        <Label>تصاویر محصول</Label>
-        <ImagesField
-          value={images}
-          initialPreviews={initial?.imageUrls ?? []}
-          onChange={setImages}
-          folder="products"
-        />
-      </div>
 
       {/* Base availability switch. Hidden when per-variant availability governs (mandatory
           variants, or optional color variants once at least one color is chosen). */}

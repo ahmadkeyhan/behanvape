@@ -33,7 +33,7 @@ export type PublicProduct = Record<string, any> & {
   // variant arrays (juice / cartridge / vape colors); each option carries its own availability
   nicotineOptions?: { density: number; available: boolean }[];
   resistanceOptions?: { resistance: number; available: boolean }[];
-  colorOptions?: { color: string; name: string; available: boolean }[];
+  colorOptions?: { color: string; name: string; available: boolean; image?: string }[];
   createdAt: string;
 };
 
