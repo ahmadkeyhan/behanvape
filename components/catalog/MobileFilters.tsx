@@ -20,11 +20,13 @@ export function MobileFilters({
   facets,
   filters,
   activeCount,
+  hideBrandFilter = false,
 }: {
   productType: ProductType;
   facets: Facets;
   filters: ProductFilters;
   activeCount: number;
+  hideBrandFilter?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -44,7 +46,12 @@ export function MobileFilters({
         <SheetHeader className="mb-4">
           <SheetTitle>فیلترها</SheetTitle>
         </SheetHeader>
-        <FilterControls productType={productType} facets={facets} filters={filters} />
+        <FilterControls
+          productType={productType}
+          facets={facets}
+          filters={filters}
+          hideBrandFilter={hideBrandFilter}
+        />
       </SheetContent>
     </Sheet>
   );

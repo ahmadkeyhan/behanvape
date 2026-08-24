@@ -1,5 +1,5 @@
 /* BehanVape service worker — minimal shell caching + Web Push. Hand-written (no PWA plugin). */
-const CACHE = "behanvape-v1.1";
+const CACHE = "behanvape-v1.2";
 const APP_SHELL = [
   "/",
   "/products",

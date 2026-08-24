@@ -94,10 +94,13 @@ export function FilterControls({
   productType,
   facets,
   filters,
+  hideBrandFilter = false,
 }: {
   productType: ProductType;
   facets: Facets;
   filters: ProductFilters;
+  /** When viewing a brand-locked listing, hide the brand chip section. */
+  hideBrandFilter?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -153,10 +156,11 @@ export function FilterControls({
   }
 
   const hasPriceFacet = facets.price.max > facets.price.min;
+  const showBrands = !hideBrandFilter && facets.brands.length > 0;
 
   const hasAnyFacet =
     hasPriceFacet ||
-    facets.brands.length > 0 ||
+    showBrands ||
     fields.some((f) => {
       const ff = facets.fields[f.key];
       if (!ff) return false;
@@ -186,7 +190,7 @@ export function FilterControls({
         />
       )}
 
-      {facets.brands.length > 0 && (
+      {showBrands && (
         <section className="space-y-2">
           <h3 className="text-sm font-semibold">برند</h3>
           <div className="flex flex-wrap gap-2">

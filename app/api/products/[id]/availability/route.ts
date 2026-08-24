@@ -96,7 +96,7 @@ async function sendRestockNotifications(
   if (requests.length === 0) return;
 
   const category = await Category.findById(categoryId).lean();
-  const url = `/products/${category?.slug ?? ""}?product=${productId}`;
+  const url = `/products/${category?.slug ?? ""}/all?product=${productId}`;
   const body =
     variant != null
       ? `${productTitle} (${variantLabel}) اکنون موجود است.`

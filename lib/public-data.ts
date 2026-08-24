@@ -5,6 +5,7 @@ import { getPublicUrl } from "@/lib/s3";
 import { serialize } from "@/lib/serialize";
 import { toProductView } from "@/lib/product-view";
 import { PRODUCT_TYPE_FIELDS, type ProductType } from "@/lib/product-types";
+import { slugifyBrand } from "@/lib/brand-slug";
 
 export const PER_PAGE = 12;
 
@@ -51,6 +52,52 @@ export async function getCategoryBySlug(slug: string): Promise<PublicCategory | 
   const cat = await Category.findOne({ slug }).lean();
   if (!cat) return null;
   return { ...serialize(cat), imageUrl: getPublicUrl(cat.image) } as unknown as PublicCategory;
+}
+
+export interface CategoryBrand {
+  name: string;
+  slug: string;
+  count: number;
+  imageUrl: string;
+}
+
+/** Distinct non-empty brands in a category, sorted fa-locale, with product count + first image. */
+export async function getCategoryBrands(categoryId: string): Promise<CategoryBrand[]> {
+  await dbConnect();
+  const products = await Product.find({ category: categoryId })
+    .sort({ order: 1, createdAt: 1 })
+    .select("brand images")
+    .lean();
+
+  const map = new Map<string, { name: string; count: number; imageKey: string }>();
+
+  for (const p of products) {
+    const name = typeof p.brand === "string" ? p.brand.trim() : "";
+    if (!name) continue;
+    const existing = map.get(name);
+    if (existing) {
+      existing.count += 1;
+      if (!existing.imageKey && Array.isArray(p.images) && p.images[0]) {
+        existing.imageKey = String(p.images[0]);
+      }
+    } else {
+      map.set(name, {
+        name,
+        count: 1,
+        imageKey: Array.isArray(p.images) && p.images[0] ? String(p.images[0]) : "",
+      });
+    }
+  }
+
+  return Array.from(map.values())
+    .map((b) => ({
+      name: b.name,
+      slug: slugifyBrand(b.name),
+      count: b.count,
+      imageUrl: b.imageKey ? getPublicUrl(b.imageKey) : "",
+    }))
+    .filter((b) => b.slug)
+    .sort((a, b) => a.name.localeCompare(b.name, "fa"));
 }
 
 /* ---------- Filters / facets ---------- */
