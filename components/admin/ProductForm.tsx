@@ -36,12 +36,15 @@ export function ProductForm({
   productType,
   categories,
   defaultCategoryId,
+  defaultBrand,
   initial,
   onSaved,
 }: {
   productType: ProductType;
   categories: { _id: string; title: string }[];
   defaultCategoryId: string;
+  /** Prefill brand on create (e.g. admin brand hub). */
+  defaultBrand?: string | null;
   initial?: ProductLike | null;
   onSaved: () => void;
 }) {
@@ -51,7 +54,7 @@ export function ProductForm({
 
   const defaultValues: ProductFormValues = {
     title: initial?.title ?? "",
-    brand: initial?.brand ?? "",
+    brand: initial?.brand ?? defaultBrand ?? "",
     // Empty (not 0) so the field shows a placeholder; zod coerces "" -> 0 on submit.
     price: initial?.price ?? "",
     description: initial?.description ?? "",

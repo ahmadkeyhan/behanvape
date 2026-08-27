@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
@@ -12,7 +13,13 @@ export default async function AdminPage() {
   const role = session.user.role;
   return (
     <main className="container py-6">
-      {role === "admin" ? <AdminTabs /> : <CashierBoard />}
+      {role === "admin" ? (
+        <Suspense fallback={null}>
+          <AdminTabs />
+        </Suspense>
+      ) : (
+        <CashierBoard />
+      )}
     </main>
   );
 }

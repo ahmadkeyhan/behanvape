@@ -6,14 +6,21 @@ import { motion } from "framer-motion";
 import { ChevronLeft } from "lucide-react";
 import type { PublicCategory } from "@/lib/public-data";
 
-export function CategoryCard({ category }: { category: PublicCategory }) {
+export function CategoryCard({
+  category,
+  href,
+}: {
+  category: PublicCategory;
+  /** Override default `/products/[slug]` link (e.g. admin hub). */
+  href?: string;
+}) {
   return (
     <motion.div
       whileHover={{ y: -4 }}
       transition={{ type: "spring", stiffness: 300, damping: 22 }}
     >
       <Link
-        href={`/products/${category.slug}`}
+        href={href ?? `/products/${category.slug}`}
         className="group block overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
       >
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
