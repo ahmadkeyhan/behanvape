@@ -23,11 +23,19 @@ import Image from "next/image";
 import { GripVertical, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, toFaDigits } from "@/lib/format";
 import { type ProductType } from "@/lib/product-types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { AvailabilityToggles } from "@/components/admin/AvailabilityToggles";
@@ -74,6 +82,9 @@ export function AdminProductList({
   const [editing, setEditing] = useState<ProductItem | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [priceDialogOpen, setPriceDialogOpen] = useState(false);
+  const [bulkPrice, setBulkPrice] = useState("");
+  const [bulkPriceSaving, setBulkPriceSaving] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -163,21 +174,58 @@ export function AdminProductList({
     }
   }
 
+  async function onBulkPrice() {
+    if (!brandName) return;
+    const price = Number(bulkPrice);
+    if (bulkPrice.trim() === "" || !Number.isInteger(price) || price < 0) {
+      toast.error("قیمت باید عدد صحیح صفر یا بیشتر باشد.");
+      return;
+    }
+    setBulkPriceSaving(true);
+    try {
+      const res = await apiFetch<{ ok: boolean; updated: number }>("/api/products/bulk-price", {
+        method: "PATCH",
+        body: JSON.stringify({ categoryId, brand: brandName, price }),
+      });
+      toast.success(`قیمت ${toFaDigits(res.updated)} محصول به‌روز شد.`);
+      setPriceDialogOpen(false);
+      setBulkPrice("");
+      await loadProducts();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "خطا در تغییر قیمت");
+    } finally {
+      setBulkPriceSaving(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchControl className="sm:max-w-sm" placeholder="جستجوی محصول…" />
-        <Button
-          size="sm"
-          className="shrink-0 self-end sm:self-auto"
-          onClick={() => {
-            setEditing(null);
-            setDialogOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4" />
-          افزودن محصول
-        </Button>
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 self-end sm:self-auto">
+          {brandName && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setBulkPrice("");
+                setPriceDialogOpen(true);
+              }}
+            >
+              تغییر قیمت
+            </Button>
+          )}
+          <Button
+            size="sm"
+            onClick={() => {
+              setEditing(null);
+              setDialogOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            افزودن محصول
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -250,6 +298,48 @@ export function AdminProductList({
               loadProducts();
             }}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={priceDialogOpen}
+        onOpenChange={(o) => {
+          setPriceDialogOpen(o);
+          if (!o) setBulkPrice("");
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>تغییر قیمت — {brandName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="bulk-price">قیمت جدید (تومان)</Label>
+            <Input
+              id="bulk-price"
+              type="number"
+              inputMode="numeric"
+              dir="ltr"
+              min={0}
+              step={1}
+              placeholder="0"
+              value={bulkPrice}
+              onChange={(e) => setBulkPrice(e.target.value)}
+              disabled={bulkPriceSaving}
+            />
+            <p className="text-xs text-muted-foreground">
+              قیمت همهٔ محصولات این برند در این دسته به این مقدار تغییر می‌کند.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              onClick={onBulkPrice}
+              disabled={bulkPriceSaving || bulkPrice.trim() === ""}
+            >
+              {bulkPriceSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+              اعمال
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
