@@ -6,6 +6,7 @@ import { serialize } from "@/lib/serialize";
 import { toProductView } from "@/lib/product-view";
 import { PRODUCT_TYPE_FIELDS, type ProductType } from "@/lib/product-types";
 import { slugifyBrand } from "@/lib/brand-slug";
+import { matchesProductSearch } from "@/lib/product-search";
 
 export const PER_PAGE = 12;
 
@@ -111,6 +112,8 @@ export interface ProductFilters {
   color: Record<string, string[]>; // color variant hex multi-select (palette identity)
   range: Record<string, { min?: number; max?: number }>;
   bool: Record<string, boolean>; // boolean toggle filters; true => require the attribute to be true
+  /** Free-text search query (`?q=`). */
+  q: string;
 }
 
 export type FieldFacet =
@@ -150,6 +153,7 @@ function numParam(v: string | string[] | undefined): number | undefined {
 }
 
 export function parseFilters(productType: ProductType, sp: SP): ProductFilters {
+  const qRaw = Array.isArray(sp.q) ? sp.q[0] : sp.q;
   const filters: ProductFilters = {
     brands: toArray(sp.brand),
     price: { min: numParam(sp.price_min), max: numParam(sp.price_max) },
@@ -158,6 +162,7 @@ export function parseFilters(productType: ProductType, sp: SP): ProductFilters {
     color: {},
     range: {},
     bool: {},
+    q: typeof qRaw === "string" ? qRaw.trim() : "",
   };
   for (const f of PRODUCT_TYPE_FIELDS[productType]) {
     if (f.filter === "multi" && f.kind === "number") {
@@ -416,7 +421,9 @@ export async function getCategoryProducts(
   const facets = computeFacets(productType, allView);
 
   const filtered = sortProducts(
-    allView.filter((p) => matchFilters(productType, p, opts.filters)),
+    allView.filter(
+      (p) => matchFilters(productType, p, opts.filters) && matchesProductSearch(p, opts.filters.q),
+    ),
     opts.sort,
   );
 

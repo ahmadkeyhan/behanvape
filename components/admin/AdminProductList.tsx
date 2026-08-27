@@ -32,6 +32,8 @@ import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { AvailabilityToggles } from "@/components/admin/AvailabilityToggles";
 import { Pagination } from "@/components/catalog/Pagination";
+import { SearchControl } from "@/components/catalog/SearchControl";
+import { matchesProductSearch } from "@/lib/product-search";
 
 /** Match public catalog `PER_PAGE` in lib/public-data.ts */
 const PER_PAGE = 12;
@@ -84,20 +86,25 @@ export function AdminProductList({
   );
 
   const filtered = useMemo(() => {
-    if (!brandName) return products;
-    return products.filter(
-      (p) => (typeof p.brand === "string" ? p.brand.trim() : "") === brandName,
-    );
-  }, [products, brandName]);
+    const byBrand = !brandName
+      ? products
+      : products.filter(
+          (p) => (typeof p.brand === "string" ? p.brand.trim() : "") === brandName,
+        );
+    const q = searchParams.get("q") ?? "";
+    if (!q.trim()) return byBrand;
+    return byBrand.filter((p) => matchesProductSearch(p, q));
+  }, [products, brandName, searchParams]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const pageRaw = Number(searchParams.get("page")) || 1;
   const page = Math.min(Math.max(1, pageRaw), totalPages);
   const pageStart = (page - 1) * PER_PAGE;
   const displayed = filtered.slice(pageStart, pageStart + PER_PAGE);
+  const q = searchParams.get("q") ?? "";
 
-  // DnD only when viewing full category (no brand lock) — reorder within current page slice.
-  const canReorder = !brandName;
+  // DnD only on full category list (no brand lock, no search) — page slice maps to products order.
+  const canReorder = !brandName && !q.trim();
 
   async function loadProducts() {
     setLoading(true);
@@ -158,9 +165,11 @@ export function AdminProductList({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <SearchControl className="sm:max-w-sm" placeholder="جستجوی محصول…" />
         <Button
           size="sm"
+          className="shrink-0 self-end sm:self-auto"
           onClick={() => {
             setEditing(null);
             setDialogOpen(true);
@@ -177,7 +186,11 @@ export function AdminProductList({
         </div>
       ) : filtered.length === 0 ? (
         <p className="py-12 text-center text-muted-foreground">
-          {brandName ? "محصولی برای این برند نیست." : "محصولی در این دسته نیست."}
+          {q.trim()
+            ? "نتیجه‌ای برای جستجو یافت نشد."
+            : brandName
+              ? "محصولی برای این برند نیست."
+              : "محصولی در این دسته نیست."}
         </p>
       ) : canReorder ? (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import {
@@ -14,6 +15,7 @@ import { ProductGrid } from "@/components/ProductGrid";
 import { FilterControls } from "@/components/catalog/FilterControls";
 import { MobileFilters } from "@/components/catalog/MobileFilters";
 import { SortControl } from "@/components/catalog/SortControl";
+import { SearchControl } from "@/components/catalog/SearchControl";
 import { Pagination } from "@/components/catalog/Pagination";
 
 export const dynamic = "force-dynamic";
@@ -131,7 +133,7 @@ export default async function CategoryBrandListingPage({
         </aside>
 
         <div className="space-y-5">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <MobileFilters
                 productType={category.productType}
@@ -142,12 +144,21 @@ export default async function CategoryBrandListingPage({
               />
               <span className="text-sm text-muted-foreground">{toFaDigits(total)} محصول</span>
             </div>
-            <SortControl value={sort} />
+            <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:max-w-md">
+              <Suspense fallback={null}>
+                <SearchControl value={filters.q} />
+              </Suspense>
+              <Suspense fallback={null}>
+                <SortControl value={sort} />
+              </Suspense>
+            </div>
           </div>
 
           {items.length === 0 ? (
             <p className="py-16 text-center text-muted-foreground">
-              محصولی با این فیلترها یافت نشد.
+              {filters.q
+                ? "نتیجه‌ای برای جستجو یافت نشد."
+                : "محصولی با این فیلترها یافت نشد."}
             </p>
           ) : (
             <ProductGrid products={items} openProductId={openProductId} />

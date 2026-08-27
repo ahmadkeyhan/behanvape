@@ -152,6 +152,7 @@ export function FilterControls({
     const next = new URLSearchParams();
     const sort = sp.get("sort");
     if (sort) next.set("sort", sort);
+    // Drop facets and search (`q`); keep sort only.
     commit(next);
   }
 
