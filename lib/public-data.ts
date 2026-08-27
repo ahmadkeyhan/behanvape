@@ -323,22 +323,30 @@ function matchFilters(
 
 function sortProducts(products: PublicProduct[], sort: SortKey): PublicProduct[] {
   const arr = [...products];
-  switch (sort) {
-    case "name_asc":
-      return arr.sort((a, b) => a.title.localeCompare(b.title, "fa"));
-    case "name_desc":
-      return arr.sort((a, b) => b.title.localeCompare(a.title, "fa"));
-    case "price_asc":
-      return arr.sort((a, b) => a.price - b.price);
-    case "price_desc":
-      return arr.sort((a, b) => b.price - a.price);
-    case "date_desc":
-      return arr.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
-    case "date_asc":
-      return arr.sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt));
-    default:
-      return arr; // already sorted by manual order
-  }
+  const byKey = (a: PublicProduct, b: PublicProduct): number => {
+    switch (sort) {
+      case "name_asc":
+        return a.title.localeCompare(b.title, "fa");
+      case "name_desc":
+        return b.title.localeCompare(a.title, "fa");
+      case "price_asc":
+        return a.price - b.price;
+      case "price_desc":
+        return b.price - a.price;
+      case "date_desc":
+        return +new Date(b.createdAt) - +new Date(a.createdAt);
+      case "date_asc":
+        return +new Date(a.createdAt) - +new Date(b.createdAt);
+      default:
+        return 0; // keep manual order within availability group
+    }
+  };
+  // Available first; unavailable sink to end. Stable sort keeps relative order inside each group.
+  return arr.sort((a, b) => {
+    const avail = Number(!!b.available) - Number(!!a.available);
+    if (avail !== 0) return avail;
+    return byKey(a, b);
+  });
 }
 
 export interface CategoryProductsResult {
