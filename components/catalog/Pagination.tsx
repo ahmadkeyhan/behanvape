@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -10,6 +11,14 @@ import { cn } from "@/lib/utils";
 export function Pagination({ page, totalPages }: { page: number; totalPages: number }) {
   const pathname = usePathname();
   const sp = useSearchParams();
+
+  // Link uses scroll={false} so Next does not instant-jump; we smooth-scroll ourselves.
+  useEffect(() => {
+    const id = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [page, pathname]);
 
   if (totalPages <= 1) return null;
 

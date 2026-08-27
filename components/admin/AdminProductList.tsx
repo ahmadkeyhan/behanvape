@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   DndContext,
   closestCenter,
@@ -30,6 +31,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { AvailabilityToggles } from "@/components/admin/AvailabilityToggles";
+import { Pagination } from "@/components/catalog/Pagination";
+
+/** Match public catalog `PER_PAGE` in lib/public-data.ts */
+const PER_PAGE = 12;
 
 export interface AdminProductCategory {
   _id: string;
@@ -60,6 +65,7 @@ export function AdminProductList({
   brandName: string | null;
   categories: AdminProductCategory[];
 }) {
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -77,13 +83,20 @@ export function AdminProductList({
     [categories, productType],
   );
 
-  const displayed = useMemo(() => {
+  const filtered = useMemo(() => {
     if (!brandName) return products;
     return products.filter(
       (p) => (typeof p.brand === "string" ? p.brand.trim() : "") === brandName,
     );
   }, [products, brandName]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const pageRaw = Number(searchParams.get("page")) || 1;
+  const page = Math.min(Math.max(1, pageRaw), totalPages);
+  const pageStart = (page - 1) * PER_PAGE;
+  const displayed = filtered.slice(pageStart, pageStart + PER_PAGE);
+
+  // DnD only when viewing full category (no brand lock) — reorder within current page slice.
   const canReorder = !brandName;
 
   async function loadProducts() {
@@ -106,9 +119,16 @@ export function AdminProductList({
     if (!canReorder) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = products.findIndex((i) => i._id === active.id);
-    const newIndex = products.findIndex((i) => i._id === over.id);
-    const next = arrayMove(products, oldIndex, newIndex);
+    const oldInPage = displayed.findIndex((i) => i._id === active.id);
+    const newInPage = displayed.findIndex((i) => i._id === over.id);
+    if (oldInPage < 0 || newInPage < 0) return;
+
+    const reorderedPage = arrayMove(displayed, oldInPage, newInPage);
+    const next = [
+      ...products.slice(0, pageStart),
+      ...reorderedPage,
+      ...products.slice(pageStart + displayed.length),
+    ];
     setProducts(next);
     try {
       await apiFetch("/api/products/reorder", {
@@ -155,7 +175,7 @@ export function AdminProductList({
         <div className="flex justify-center py-12 text-muted-foreground">
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
-      ) : displayed.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <p className="py-12 text-center text-muted-foreground">
           {brandName ? "محصولی برای این برند نیست." : "محصولی در این دسته نیست."}
         </p>
@@ -194,6 +214,10 @@ export function AdminProductList({
             />
           ))}
         </ul>
+      )}
+
+      {!loading && filtered.length > 0 && (
+        <Pagination page={page} totalPages={totalPages} />
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

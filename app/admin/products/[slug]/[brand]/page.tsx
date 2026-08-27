@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { requireAdmin } from "@/lib/require-admin";
@@ -81,16 +82,18 @@ export default async function AdminCategoryBrandManagePage({
         <p className="mt-1 text-sm text-muted-foreground">ویرایش، ترتیب و موجودی محصولات</p>
       </div>
 
-      <AdminProductList
-        categoryId={category._id}
-        productType={category.productType}
-        brandName={lockedBrand}
-        categories={allCategories.map((c) => ({
-          _id: c._id,
-          title: c.title,
-          productType: c.productType,
-        }))}
-      />
+      <Suspense fallback={null}>
+        <AdminProductList
+          categoryId={category._id}
+          productType={category.productType}
+          brandName={lockedBrand}
+          categories={allCategories.map((c) => ({
+            _id: c._id,
+            title: c.title,
+            productType: c.productType,
+          }))}
+        />
+      </Suspense>
     </main>
   );
 }
