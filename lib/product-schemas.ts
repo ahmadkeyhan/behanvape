@@ -41,6 +41,25 @@ function variantArray(valueKey: string) {
   );
 }
 
+/** Array of {name, available, image?} named variants; drops rows with a blank name. */
+function namedVariantArray() {
+  const option = z.object({
+    name: z.string().trim().min(1),
+    available: z.preprocess((v) => (v === undefined || v === null ? true : v), z.boolean()),
+    image: z
+      .preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), z.string().optional())
+      .optional(),
+  });
+  return z.preprocess(
+    (v) =>
+      Array.isArray(v)
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          v.filter((o: any) => o != null && typeof o.name === "string" && o.name.trim() !== "")
+        : [],
+    z.array(option).optional().default([]),
+  );
+}
+
 /** Array of {color, name, available, image?} color variants; drops rows with a blank color. */
 function colorVariantArray() {
   const option = z.object({
@@ -102,6 +121,12 @@ export const typeFieldSchemas: Record<ProductType, z.ZodTypeAny> = {
     chargingTime: optionalNumber,
     colorOptions: colorVariantArray(),
   }),
+  cigarette: z.object({
+    tar: optionalNumber,
+    nicotine: optionalNumber,
+    flavorOptions: namedVariantArray(),
+    madeIn: z.string().trim().optional().default(""),
+  }),
   other: z.object({}),
 };
 
@@ -135,7 +160,8 @@ export function getProductFormSchema(productType: ProductType) {
     if (f.kind === "variants") continue; // managed outside RHF (separate state)
     if (f.kind === "number") shape[f.key] = optionalFormNumber;
     else if (f.kind === "boolean") shape[f.key] = z.boolean().optional().default(false);
-    else shape[f.key] = z.string().optional();
+    else if (f.kind === "string") shape[f.key] = z.string().trim().optional().default("");
+    else shape[f.key] = z.string().optional(); // notes as free text
   }
   return z.object(shape);
 }
@@ -181,6 +207,8 @@ export function formToPayload(
         .split(/[,\n،]/)
         .map((s) => s.trim())
         .filter(Boolean);
+    } else if (f.kind === "string") {
+      payload[f.key] = String(values[f.key] ?? "").trim();
     } else if (f.kind === "boolean") {
       payload[f.key] = Boolean(values[f.key]);
     } else {

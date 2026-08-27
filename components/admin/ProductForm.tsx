@@ -66,6 +66,8 @@ export function ProductForm({
       defaultValues[f.key] = Array.isArray(initial?.[f.key]) ? initial[f.key].join("، ") : "";
     } else if (f.kind === "boolean") {
       defaultValues[f.key] = initial?.[f.key] ?? false;
+    } else if (f.kind === "string") {
+      defaultValues[f.key] = initial?.[f.key] ?? "";
     } else {
       defaultValues[f.key] = initial?.[f.key] ?? "";
     }
@@ -86,6 +88,8 @@ export function ProductForm({
   const [imagePreviews, setImagePreviews] = useState<string[]>(initial?.imageUrls ?? []);
   const [available, setAvailable] = useState<boolean>(initial?.available ?? true);
   const isColor = variantField?.variantType === "color";
+  const isNamed = variantField?.variantType === "named";
+  const isImageVariant = isColor || isNamed;
   const [variants, setVariants] = useState<
     { value: string; name?: string; available: boolean; image?: string }[]
   >(() =>
@@ -99,7 +103,14 @@ export function ProductForm({
                 available: o?.available !== false,
                 image: typeof o?.image === "string" && o.image ? String(o.image) : undefined,
               }
-            : { value: String(o?.[variantKey] ?? ""), available: o?.available !== false },
+            : isNamed
+              ? {
+                  value: String(o?.name ?? ""),
+                  name: String(o?.name ?? ""),
+                  available: o?.available !== false,
+                  image: typeof o?.image === "string" && o.image ? String(o.image) : undefined,
+                }
+              : { value: String(o?.[variantKey] ?? ""), available: o?.available !== false },
         )
       : [],
   );
@@ -108,7 +119,7 @@ export function ProductForm({
   function handleImagesChange(keys: string[], previews: string[]) {
     setImages(keys);
     setImagePreviews(previews);
-    if (isColor) {
+    if (isImageVariant) {
       setVariants((prev) =>
         prev.map((v) =>
           v.image && !keys.includes(v.image) ? { ...v, image: undefined } : v,
@@ -130,9 +141,17 @@ export function ProductForm({
               available: v.available,
               ...(v.image ? { image: v.image } : {}),
             }))
-        : variants
-            .filter((v) => v.value !== "" && !Number.isNaN(Number(v.value)))
-            .map((v) => ({ [variantKey]: Number(v.value), available: v.available }));
+        : isNamed
+          ? variants
+              .filter((v) => (v.name ?? v.value).trim() !== "")
+              .map((v) => ({
+                name: (v.name ?? v.value).trim(),
+                available: v.available,
+                ...(v.image ? { image: v.image } : {}),
+              }))
+          : variants
+              .filter((v) => v.value !== "" && !Number.isNaN(Number(v.value)))
+              .map((v) => ({ [variantKey]: Number(v.value), available: v.available }));
     }
     try {
       if (initial?._id) {
@@ -236,6 +255,15 @@ export function ProductForm({
               </div>
             );
           }
+          if (f.kind === "string") {
+            return (
+              <div key={f.key} className="space-y-2">
+                <Label htmlFor={`p-${f.key}`}>{f.label}</Label>
+                <Input id={`p-${f.key}`} {...register(f.key)} />
+              </div>
+            );
+          }
+          // notes
           return (
             <div key={f.key} className="space-y-2 sm:col-span-2">
               <Label htmlFor={`p-${f.key}`}>{f.label} (با ویرگول جدا کنید)</Label>
@@ -246,7 +274,7 @@ export function ProductForm({
       </div>
 
       {/* Numeric variants editor (juice nicotine / cartridge resistance): each value + its availability */}
-      {variantField && !isColor && (
+      {variantField && !isColor && !isNamed && (
         <div className="space-y-2 rounded-lg border border-border p-3">
           <div className="flex items-center justify-between">
             <Label>
@@ -402,71 +430,94 @@ export function ProductForm({
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                  <div className="space-y-1 ps-7">
-                    <p className="text-xs text-muted-foreground">تصویر این رنگ (اختیاری)</p>
-                    {images.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">
-                        ابتدا تصاویر محصول را بارگذاری کنید.
-                      </p>
-                    ) : (
-                      <div className="flex flex-wrap gap-1.5">
-                        <button
-                          type="button"
-                          title="بدون تصویر"
-                          aria-label="بدون تصویر"
-                          aria-pressed={!v.image}
-                          onClick={() =>
-                            setVariants((prev) =>
-                              prev.map((x, j) => (j === i ? { ...x, image: undefined } : x)),
-                            )
-                          }
-                          className={cn(
-                            "flex h-10 w-10 items-center justify-center rounded-md border text-[10px] leading-tight",
-                            !v.image
-                              ? "border-primary ring-2 ring-primary/40"
-                              : "border-border text-muted-foreground hover:border-primary/50",
-                          )}
-                        >
-                          هیچ
-                        </button>
-                        {images.map((key, imgIdx) => (
-                          <button
-                            key={key + imgIdx}
-                            type="button"
-                            title={`تصویر ${imgIdx + 1}`}
-                            aria-label={`تصویر ${imgIdx + 1}`}
-                            aria-pressed={v.image === key}
-                            onClick={() =>
-                              setVariants((prev) =>
-                                prev.map((x, j) => (j === i ? { ...x, image: key } : x)),
-                              )
-                            }
-                            className={cn(
-                              "relative h-10 w-10 overflow-hidden rounded-md border",
-                              v.image === key
-                                ? "border-primary ring-2 ring-primary/40"
-                                : "border-border hover:border-primary/50",
-                            )}
-                          >
-                            {imagePreviews[imgIdx] ? (
-                              <Image
-                                src={imagePreviews[imgIdx]}
-                                alt=""
-                                fill
-                                sizes="40px"
-                                className="object-cover"
-                                unoptimized
-                              />
-                            ) : (
-                              <span className="flex h-full items-center justify-center text-[10px] text-muted-foreground">
-                                {imgIdx + 1}
-                              </span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                  <VariantImagePicker
+                    images={images}
+                    imagePreviews={imagePreviews}
+                    selected={v.image}
+                    onSelect={(image) =>
+                      setVariants((prev) =>
+                        prev.map((x, j) => (j === i ? { ...x, image } : x)),
+                      )
+                    }
+                    hint="تصویر این رنگ (اختیاری)"
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {/* Named variants editor (cigarette flavors): free-text name + availability + gallery image */}
+      {variantField && isNamed && (
+        <div className="space-y-3 rounded-lg border border-border p-3">
+          <div className="flex items-center justify-between">
+            <Label>{variantField.label}</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setVariants((v) => [...v, { value: "", name: "", available: true }])}
+            >
+              <Plus className="h-4 w-4" />
+              افزودن
+            </Button>
+          </div>
+          {variants.length === 0 ? (
+            <p className="text-xs text-muted-foreground">هنوز طعمی اضافه نشده است.</p>
+          ) : (
+            <ul className="space-y-3">
+              {variants.map((v, i) => (
+                <li key={i} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={v.name ?? ""}
+                      onChange={(e) =>
+                        setVariants((prev) =>
+                          prev.map((x, j) =>
+                            j === i
+                              ? { ...x, name: e.target.value, value: e.target.value }
+                              : x,
+                          ),
+                        )
+                      }
+                      placeholder="نام طعم"
+                      className="h-8 flex-1 text-sm"
+                      aria-label="نام طعم"
+                    />
+                    <label className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+                      موجود
+                      <Switch
+                        checked={v.available}
+                        onCheckedChange={(c) =>
+                          setVariants((prev) =>
+                            prev.map((x, j) => (j === i ? { ...x, available: c } : x)),
+                          )
+                        }
+                      />
+                    </label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0 text-destructive hover:text-destructive"
+                      onClick={() => setVariants((prev) => prev.filter((_, j) => j !== i))}
+                      aria-label="حذف"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
+                  <VariantImagePicker
+                    images={images}
+                    imagePreviews={imagePreviews}
+                    selected={v.image}
+                    onSelect={(image) =>
+                      setVariants((prev) =>
+                        prev.map((x, j) => (j === i ? { ...x, image } : x)),
+                      )
+                    }
+                    hint="تصویر این طعم (اختیاری)"
+                  />
                 </li>
               ))}
             </ul>
@@ -490,5 +541,77 @@ export function ProductForm({
         </Button>
       </DialogFooter>
     </form>
+  );
+}
+
+function VariantImagePicker({
+  images,
+  imagePreviews,
+  selected,
+  onSelect,
+  hint,
+}: {
+  images: string[];
+  imagePreviews: string[];
+  selected?: string;
+  onSelect: (image: string | undefined) => void;
+  hint: string;
+}) {
+  return (
+    <div className="space-y-1 ps-0 sm:ps-1">
+      <p className="text-xs text-muted-foreground">{hint}</p>
+      {images.length === 0 ? (
+        <p className="text-xs text-muted-foreground">ابتدا تصاویر محصول را بارگذاری کنید.</p>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            title="بدون تصویر"
+            aria-label="بدون تصویر"
+            aria-pressed={!selected}
+            onClick={() => onSelect(undefined)}
+            className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-md border text-[10px] leading-tight",
+              !selected
+                ? "border-primary ring-2 ring-primary/40"
+                : "border-border text-muted-foreground hover:border-primary/50",
+            )}
+          >
+            هیچ
+          </button>
+          {images.map((key, imgIdx) => (
+            <button
+              key={key + imgIdx}
+              type="button"
+              title={`تصویر ${imgIdx + 1}`}
+              aria-label={`تصویر ${imgIdx + 1}`}
+              aria-pressed={selected === key}
+              onClick={() => onSelect(key)}
+              className={cn(
+                "relative h-10 w-10 overflow-hidden rounded-md border",
+                selected === key
+                  ? "border-primary ring-2 ring-primary/40"
+                  : "border-border hover:border-primary/50",
+              )}
+            >
+              {imagePreviews[imgIdx] ? (
+                <Image
+                  src={imagePreviews[imgIdx]}
+                  alt=""
+                  fill
+                  sizes="40px"
+                  className="object-cover"
+                  unoptimized
+                />
+              ) : (
+                <span className="flex h-full items-center justify-center text-[10px] text-muted-foreground">
+                  {imgIdx + 1}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

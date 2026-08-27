@@ -94,6 +94,26 @@ const iqosSchema = new Schema({
   colorOptions: { type: [colorOptionSchema], default: [] },
 });
 
+const cigaretteSchema = new Schema({
+  tar: { type: Number }, // mg
+  nicotine: { type: Number }, // mg
+  // flavors as variants (name identity + availability + optional gallery image)
+  flavorOptions: {
+    type: [
+      new Schema(
+        {
+          name: { type: String },
+          available: { type: Boolean, default: true },
+          image: { type: String },
+        },
+        { _id: false },
+      ),
+    ],
+    default: [],
+  },
+  madeIn: { type: String, default: "", trim: true },
+});
+
 // "other": no extra fields — base schema only (title/description/brand/price/images/available).
 const otherSchema = new Schema({});
 
@@ -104,6 +124,7 @@ const discriminatorSchemas: Record<string, Schema> = {
   tobacco: tobaccoSchema,
   cartridge: cartridgeSchema,
   iqos: iqosSchema,
+  cigarette: cigaretteSchema,
   other: otherSchema,
 };
 

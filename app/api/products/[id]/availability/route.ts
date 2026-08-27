@@ -56,7 +56,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       if (!was && opt.available) {
         // color variants are labelled by their name; numeric variants by value + unit
         const label =
-          vf.variantType === "color"
+          vf.variantType === "color" || vf.variantType === "named"
             ? opt.name || String(variant)
             : `${variant}${vf.unit ? " " + vf.unit : ""}`;
         await sendRestockNotifications(id, product.title, product.category, variant, label);

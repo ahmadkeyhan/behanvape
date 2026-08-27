@@ -35,6 +35,7 @@ export type PublicProduct = Record<string, any> & {
   nicotineOptions?: { density: number; available: boolean }[];
   resistanceOptions?: { resistance: number; available: boolean }[];
   colorOptions?: { color: string; name: string; available: boolean; image?: string }[];
+  flavorOptions?: { name: string; available: boolean; image?: string }[];
   createdAt: string;
 };
 
@@ -165,8 +166,13 @@ export function parseFilters(productType: ProductType, sp: SP): ProductFilters {
         .filter((n) => !Number.isNaN(n));
     } else if (f.filter === "multi" && f.kind === "notes") {
       filters.notes[f.key] = toArray(sp[`f_${f.key}`]);
+    } else if (f.filter === "multi" && f.kind === "string") {
+      // Reuse notes multi pipeline for scalar string facets (e.g. madeIn).
+      filters.notes[f.key] = toArray(sp[`f_${f.key}`]);
     } else if (f.kind === "variants" && f.variantType === "color" && f.filter !== "none") {
       filters.color[f.key] = toArray(sp[`f_${f.key}`]);
+    } else if (f.kind === "variants" && f.variantType === "named" && f.filter !== "none") {
+      filters.notes[f.key] = toArray(sp[`f_${f.key}`]);
     } else if (f.kind === "variants" && f.filter !== "none") {
       filters.multi[f.key] = toArray(sp[`f_${f.key}`])
         .map(Number)
@@ -230,6 +236,16 @@ function computeFacets(productType: ProductType, products: PublicProduct[]): Fac
         new Set(products.flatMap((p) => (Array.isArray(p[f.key]) ? p[f.key] : []))),
       ).sort((a: string, b: string) => a.localeCompare(b, "fa"));
       fields[f.key] = { kind: "notes", values };
+    } else if (f.filter === "multi" && f.kind === "string") {
+      const values = Array.from(
+        new Set(
+          products
+            .map((p) => p[f.key])
+            .filter((v): v is string => typeof v === "string" && v.trim() !== "")
+            .map((v) => v.trim()),
+        ),
+      ).sort((a, b) => a.localeCompare(b, "fa"));
+      fields[f.key] = { kind: "notes", values };
     } else if (f.kind === "variants" && f.variantType === "color" && f.filter !== "none") {
       const vk = f.variantKey as string;
       const values = Array.from(
@@ -242,6 +258,18 @@ function computeFacets(productType: ProductType, products: PublicProduct[]): Fac
         ),
       ).sort((a, b) => a.localeCompare(b));
       fields[f.key] = { kind: "color", values };
+    } else if (f.kind === "variants" && f.variantType === "named" && f.filter !== "none") {
+      const vk = f.variantKey as string;
+      const values = Array.from(
+        new Set(
+          products
+            .flatMap((p) => (Array.isArray(p[f.key]) ? p[f.key] : []))
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .map((o: any) => o?.[vk])
+            .filter((v: unknown): v is string => typeof v === "string" && v.trim() !== ""),
+        ),
+      ).sort((a, b) => a.localeCompare(b, "fa"));
+      fields[f.key] = { kind: "notes", values };
     } else if (f.kind === "variants" && f.filter !== "none") {
       const vk = f.variantKey as string;
       const values = Array.from(
@@ -291,6 +319,12 @@ function matchFilters(
         const have: string[] = Array.isArray(p[f.key]) ? p[f.key] : [];
         if (!sel.some((s) => have.includes(s))) return false;
       }
+    } else if (f.filter === "multi" && f.kind === "string") {
+      const sel = filters.notes[f.key];
+      if (sel?.length) {
+        const val = typeof p[f.key] === "string" ? p[f.key].trim() : "";
+        if (!val || !sel.includes(val)) return false;
+      }
     } else if (f.kind === "variants" && f.variantType === "color" && f.filter !== "none") {
       const sel = filters.color[f.key];
       if (sel?.length) {
@@ -298,6 +332,16 @@ function matchFilters(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const have: string[] = Array.isArray(p[f.key])
           ? p[f.key].map((o: any) => String(o?.[vk] ?? "")).filter(Boolean)
+          : [];
+        if (!sel.some((s) => have.includes(s))) return false;
+      }
+    } else if (f.kind === "variants" && f.variantType === "named" && f.filter !== "none") {
+      const sel = filters.notes[f.key];
+      if (sel?.length) {
+        const vk = f.variantKey as string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const have: string[] = Array.isArray(p[f.key])
+          ? p[f.key].map((o: any) => String(o?.[vk] ?? "").trim()).filter(Boolean)
           : [];
         if (!sel.some((s) => have.includes(s))) return false;
       }

@@ -6,7 +6,7 @@
  *
  * LIMITATION: adding a genuinely new attribute shape means adding an enum value
  * here AND a matching Mongoose discriminator in models/Product.ts. Multiple
- * categories may share one productType (e.g. Juice/Salt/Cigarette all use "juice").
+ * categories may share one productType (e.g. Juice/Salt both use "juice").
  */
 
 export const PRODUCT_TYPES = [
@@ -16,24 +16,26 @@ export const PRODUCT_TYPES = [
   "tobacco",
   "cartridge",
   "iqos",
+  "cigarette",
   "other",
 ] as const;
 export type ProductType = (typeof PRODUCT_TYPES)[number];
 
 export const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
-  juice: "جویس / سالت / سیگار",
+  juice: "جویس / سالت",
   vape: "ویپ و پاد",
   disposable: "یکبارمصرف",
   tobacco: "توتون",
   cartridge: "کارتریج",
   iqos: "آیکاس",
+  cigarette: "سیگار",
   other: "سایر",
 };
 
-export type AttrKind = "number" | "notes" | "boolean" | "variants";
+export type AttrKind = "number" | "notes" | "boolean" | "variants" | "string";
 export type FilterKind = "range" | "multi" | "none" | "boolean";
-/** "number" variants carry a numeric value (density/resistance); "color" variants carry a hex+name swatch. */
-export type VariantType = "number" | "color";
+/** "number" variants carry a numeric value; "color" = hex+name swatch; "named" = free-text name + optional image. */
+export type VariantType = "number" | "color" | "named";
 
 export interface AttrField {
   /** document field name on the discriminator */
@@ -42,7 +44,7 @@ export interface AttrField {
   label: string;
   /** Persian unit suffix, if any */
   unit?: string;
-  /** scalar number, list of string notes, boolean, or an array of {value, available} variants */
+  /** scalar number, list of string notes, single string, boolean, or an array of {value, available} variants */
   kind: AttrKind;
   /** how this field appears in the public filter UI */
   filter: FilterKind;
@@ -176,6 +178,20 @@ export const PRODUCT_TYPE_FIELDS: Record<ProductType, AttrField[]> = {
       variantKey: "color",
       variantType: "color",
     },
+  ],
+  cigarette: [
+    { key: "tar", label: "قطران", unit: "میلی‌گرم", kind: "number", filter: "multi" },
+    { key: "nicotine", label: "نیکوتین", unit: "میلی‌گرم", kind: "number", filter: "multi" },
+    // flavors as variants — each flavor has its own availability + optional gallery image
+    {
+      key: "flavorOptions",
+      label: "طعم",
+      kind: "variants",
+      filter: "multi",
+      variantKey: "name",
+      variantType: "named",
+    },
+    { key: "madeIn", label: "ساخت", kind: "string", filter: "multi" },
   ],
   // "other" uses only the base product fields (title/description/brand/price/images/available).
   other: [],

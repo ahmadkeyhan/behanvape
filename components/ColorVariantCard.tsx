@@ -19,20 +19,25 @@ export type ColorOption = {
 };
 
 /**
- * Modal card for color variants (vape/iqos): lists every color as a swatch + name with its
- * availability. Out-of-stock colors get a per-color "notify me" button (keyed by hex).
- * Tapping the color row (not the notify button) can jump the gallery to that color's image.
+ * Modal card for color/named image variants: lists every option with availability.
+ * Out-of-stock options get a per-option "notify me" button (keyed by color hex or name).
+ * Tapping the row can jump the gallery to that option's linked image.
  */
 export function ColorVariantCard({
   productId,
   label,
   options,
   onSelectColor,
+  /** Identity field on each option used for notify + keys. Default: color (hex). */
+  identityKey = "color",
+  showSwatch = true,
 }: {
   productId: string;
   label: string;
   options: ColorOption[];
   onSelectColor?: (option: ColorOption) => void;
+  identityKey?: string;
+  showSwatch?: boolean;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [notified, setNotified] = useState<Set<string>>(new Set());
@@ -43,15 +48,15 @@ export function ColorVariantCard({
 
   if (!options.length) return null;
 
-  async function notify(hex: string) {
-    setBusy(hex);
+  async function notify(id: string) {
+    setBusy(id);
     try {
       const endpoint = await subscribeToPush();
       await apiFetch("/api/notify-me", {
         method: "POST",
-        body: JSON.stringify({ productId, subscriptionEndpoint: endpoint, variant: hex }),
+        body: JSON.stringify({ productId, subscriptionEndpoint: endpoint, variant: id }),
       });
-      setNotified((prev) => new Set(prev).add(hex));
+      setNotified((prev) => new Set(prev).add(id));
       toast.success("ثبت شد!");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "خطا در ثبت اعلان");
@@ -65,8 +70,8 @@ export function ColorVariantCard({
       <span className="text-xs text-muted-foreground">{label}</span>
       <ul className="mt-2 flex flex-col gap-2">
         {options.map((o, i) => {
-          const hex = String(o.color ?? "");
-          const done = notified.has(hex);
+          const id = String(o[identityKey] ?? o.name ?? i);
+          const done = notified.has(id);
           return (
             <li key={i} className="flex items-center justify-between gap-2">
               <button
@@ -74,20 +79,22 @@ export function ColorVariantCard({
                 onClick={() => onSelectColor?.(o)}
                 className="flex min-w-0 flex-1 items-center gap-2 rounded-md text-start transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <span
-                  className={cn(
-                    "h-5 w-5 shrink-0 rounded-full border border-border",
-                    !o.available && "opacity-40",
-                  )}
-                  style={{ backgroundColor: hex }}
-                />
+                {showSwatch && (
+                  <span
+                    className={cn(
+                      "h-5 w-5 shrink-0 rounded-full border border-border",
+                      !o.available && "opacity-40",
+                    )}
+                    style={{ backgroundColor: String(o.color ?? "") }}
+                  />
+                )}
                 <span
                   className={cn(
                     "truncate text-sm",
                     !o.available && "text-muted-foreground line-through",
                   )}
                 >
-                  {o.name || hex}
+                  {o.name || id}
                 </span>
               </button>
               {o.available ? (
@@ -96,10 +103,10 @@ export function ColorVariantCard({
                 <Button
                   size="sm"
                   variant={done ? "secondary" : "default"}
-                  disabled={busy === hex || done}
-                  onClick={() => notify(hex)}
+                  disabled={busy === id || done}
+                  onClick={() => notify(id)}
                 >
-                  {busy === hex ? (
+                  {busy === id ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : done ? (
                     <Check className="h-4 w-4" />

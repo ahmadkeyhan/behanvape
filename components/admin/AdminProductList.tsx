@@ -290,11 +290,17 @@ function ProductRow({
         <div className="min-w-0">
           <p className="font-medium leading-6 break-words">{product.title}</p>
           <p className="text-xs text-muted-foreground">{formatPrice(product.price)}</p>
-          {product.productType === "juice" &&
+          {((product.productType === "juice" &&
             Array.isArray(product.notes) &&
-            product.notes.length > 0 && (
+            product.notes.length > 0) ||
+            (product.productType === "cigarette" &&
+              Array.isArray(product.flavorOptions) &&
+              product.flavorOptions.length > 0)) && (
               <div className="mt-1 flex flex-wrap items-center gap-1">
-                {product.notes.map((n: string) => (
+                {(product.productType === "cigarette"
+                  ? product.flavorOptions.map((o: { name?: string }) => o.name).filter(Boolean)
+                  : product.notes
+                ).map((n: string) => (
                   <Badge key={n} variant="outline" className="px-1.5 py-0 text-[10px] font-normal">
                     {n}
                   </Badge>

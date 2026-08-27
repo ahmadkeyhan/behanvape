@@ -24,6 +24,8 @@ export function AvailabilityToggles({
   const vf = getVariantField(product.productType);
   const vk = vf?.variantKey ?? "value";
   const isColor = vf?.variantType === "color";
+  const isNamed = vf?.variantType === "named";
+  const showNameLabel = isColor || isNamed;
 
   const [options, setOptions] = useState<
     { value: string | number; name?: string; available: boolean }[]
@@ -32,7 +34,7 @@ export function AvailabilityToggles({
       ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
         product[vf.key].map((o: any) => ({
           value: o?.[vk],
-          name: isColor ? (o?.name ?? "") : undefined,
+          name: showNameLabel ? (o?.name ?? "") : undefined,
           available: o?.available !== false,
         }))
       : [],
@@ -77,6 +79,8 @@ export function AvailabilityToggles({
                 />
                 <span className="text-muted-foreground">{o.name || String(o.value)}</span>
               </span>
+            ) : isNamed ? (
+              <span className="text-muted-foreground">{o.name || String(o.value)}</span>
             ) : (
               <span className="text-muted-foreground" dir="ltr">
                 {o.value}

@@ -169,13 +169,15 @@ export function ProductDetailModal({
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const opts = value as { available: boolean; [k: string]: any }[] | undefined;
                   if (!Array.isArray(opts) || opts.length === 0) return null;
-                  if (f.variantType === "color") {
+                  if (f.variantType === "color" || f.variantType === "named") {
                     return (
                       <ColorVariantCard
                         key={f.key}
                         productId={product._id}
                         label={f.label}
                         options={opts}
+                        identityKey={f.variantKey ?? "color"}
+                        showSwatch={f.variantType === "color"}
                         onSelectColor={(option) => {
                           const keys: string[] = Array.isArray(product.images)
                             ? product.images
@@ -212,6 +214,15 @@ export function ProductDetailModal({
                           </Badge>
                         ))}
                       </dd>
+                    </div>
+                  );
+                }
+                if (f.kind === "string") {
+                  if (typeof value !== "string" || !value.trim()) return null;
+                  return (
+                    <div key={f.key} className="rounded-lg bg-muted/50 p-3">
+                      <dt className="text-xs text-muted-foreground">{f.label}</dt>
+                      <dd className="mt-0.5 font-medium">{value}</dd>
                     </div>
                   );
                 }
